@@ -10,6 +10,6 @@ public class RepositoryContext : DbContext
     {
     }
 
-    public DbSet<TodoItem> TodoItems { get; set; } = null!;
+    public DbSet<Project> TodoItems { get; set; }
 }
 
