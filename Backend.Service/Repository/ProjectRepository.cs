@@ -15,4 +15,9 @@ public class ProjectRepository : RepositoryBase<Project>, IProjectRepository
     {
         return FindByCondition(project => project.Id == projectId).FirstOrDefaultAsync();
     }
+
+    public Task<List<Project>> GetAllProjects()
+    {
+        return FindAll().ToListAsync();
+    }
 }
