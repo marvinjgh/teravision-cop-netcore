@@ -1,4 +1,6 @@
 using Backend.Service.Contracts;
+using Backend.Service.DataTransferObjects;
+using Backend.Service.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.API.Controllers;
