@@ -15,4 +15,6 @@ public class ProjectRepository : RepositoryBase<Project>, IProjectRepository
     {
         return FindByCondition(project => project.Id == projectId).FirstOrDefaultAsync();
     }
+
+    public void CreateProject(Project project) => Create(project);
 }

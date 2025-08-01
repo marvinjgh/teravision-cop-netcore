@@ -18,6 +18,6 @@ public class Project : BaseEntity
 
     public override string ToString()
     {
-        return $"Project [Id: {Id}, Name: {Name ?? "N/A"}, Description: {Description ?? "N/A"}]";
+        return $"Project [Id: {Id}, Name: {Name ?? "N/A"}, Description: {Description ?? "N/A"}, CreateAt: {CreatedAt}, UpdateAt: {(UpdatedAt.HasValue ? UpdatedAt.Value.ToString() : "N/A")}]";
     }
 }
