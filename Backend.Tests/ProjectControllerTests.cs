@@ -74,6 +74,29 @@ public class ProjectControllerTests
     }
 
     [Fact]
+    public async Task GetAllProjects_ReturnsHttpOk()
+    {
+        // Arrange
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        mockRepo.Setup(repo => repo.Project.GetAllProjects())
+            .ReturnsAsync(new List<Project>
+            {
+                new Project { Id = 1, Name = "Project 1" },
+                new Project { Id = 2, Name = "Project 2" }
+            });
+
+        var controller = new ProjectController(mockRepo.Object);
+
+        //Act
+        var result = await controller.GetAllProjects();
+
+        //Assert
+        var okObjectResult = Assert.IsType<OkObjectResult>(result);
+        var projects = Assert.IsAssignableFrom<List<Project>>(okObjectResult.Value);
+        Assert.Equal(2, projects.Count);
+    }
+
+    [Fact]
     public async Task PostProject_ReturnsBadRequest()
     {
         // Arrange: create mocks and simulate new project Id assignment

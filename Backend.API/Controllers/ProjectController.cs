@@ -28,6 +28,14 @@ public class ProjectController : ControllerBase
         return Ok(project);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAllProjects()
+    {
+        var projects = await _repository.Project.GetAllProjects();
+
+        return Ok(projects);
+    }
+
     [HttpPost]
     public async Task<IActionResult> PostProject([FromBody] ProjectCreateDTO project)
     {
