@@ -6,7 +6,7 @@ public interface IProjectRepository
 {
     // Task<IEnumerable<Project>> GetAllProjects();
     Task<Project?> GetProjectById(long projectId);
-    Task<List<Project>> GetAllProjects();
+    Task<IEnumerable<Project>> GetAllProjects();
     // void CreateProject(Project project);
     // void UpdateProject(Project project);
     // void DeleteProject(Project project);
