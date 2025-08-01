@@ -21,4 +21,6 @@ public class ProjectRepository : RepositoryBase<Project>, IProjectRepository
         return await FindAll()
             .ToListAsync();
     }
+
+    public void CreateProject(Project project) => Create(project);
 }

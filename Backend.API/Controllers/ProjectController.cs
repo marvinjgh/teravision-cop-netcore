@@ -1,4 +1,6 @@
 using Backend.Service.Contracts;
+using Backend.Service.DataTransferObjects;
+using Backend.Service.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.API.Controllers;
@@ -36,4 +38,26 @@ public class ProjectController : ControllerBase
         return Ok(projects);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> PostProject([FromBody] ProjectCreateDTO project)
+    {
+        Console.WriteLine(project);
+        Console.WriteLine(ModelState.IsValid);
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new ErrorDTO { Message = "Invalid model object" });
+        }
+
+        var newProject = new Project
+        {
+            Name = project.Name,
+            Description = project.Description
+        };
+
+        _repository.Project.CreateProject(newProject);
+        await _repository.Save();
+
+        return CreatedAtAction(nameof(GetProject), new { id = newProject.Id }, newProject);
+    }
 }
