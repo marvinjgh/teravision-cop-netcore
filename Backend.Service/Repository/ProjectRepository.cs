@@ -15,4 +15,10 @@ public class ProjectRepository : RepositoryBase<Project>, IProjectRepository
     {
         return FindByCondition(project => project.Id == projectId).FirstOrDefaultAsync();
     }
+
+    public async Task<IEnumerable<Project>> GetAllProjects()
+    {
+        return await FindAll()
+            .ToListAsync();
+    }
 }
