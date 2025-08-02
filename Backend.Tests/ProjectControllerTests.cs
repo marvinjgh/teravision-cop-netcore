@@ -26,7 +26,8 @@ public class ProjectControllerTests
 
         //Assert
         var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal(testId, notFoundObjectResult.Value);
+        ErrorDTO error = (ErrorDTO)notFoundObjectResult.Value;
+        Assert.Equal("Project not found", error.Message);
 
         mockRepo.Verify(
             repo => repo.Project.GetProjectById(testId),
@@ -74,7 +75,7 @@ public class ProjectControllerTests
     }
 
     [Fact]
-    public async Task GetAllProjects_ReturnsHttpOk()
+    public async Task GetAllProjects_ReturnsOk()
     {
         // Arrange
         var mockRepo = new Mock<IRepositoryWrapper>();
@@ -94,6 +95,11 @@ public class ProjectControllerTests
         var okObjectResult = Assert.IsType<OkObjectResult>(result);
         var projects = Assert.IsAssignableFrom<List<Project>>(okObjectResult.Value);
         Assert.Equal(2, projects.Count);
+
+        mockRepo.Verify(
+            repo => repo.Project.GetAllProjects(),
+            Times.Once
+        );
     }
 
     [Fact]
@@ -129,7 +135,7 @@ public class ProjectControllerTests
     public async Task PostProject_ReturnsCreatedAtAction()
     {
         // Arrange: create mocks and simulate new project Id assignment
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
         var projectCreateDTO = new ProjectCreateDTO
         {
             Name = "Test Project",

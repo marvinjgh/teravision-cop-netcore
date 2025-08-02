@@ -17,7 +17,7 @@ public class RepositoryContext : DbContext
     public override int SaveChanges()
     {
         var entries = ChangeTracker.Entries();
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
         foreach (var entry in entries)
         {
@@ -36,7 +36,7 @@ public class RepositoryContext : DbContext
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entries = ChangeTracker.Entries();
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
         foreach (var entry in entries)
         {

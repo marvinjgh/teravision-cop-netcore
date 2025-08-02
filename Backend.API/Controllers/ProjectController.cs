@@ -17,20 +17,24 @@ public class ProjectController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType<Project>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
     public async Task<IActionResult> GetProject(long id)
     {
-
         var project = await _repository.Project.GetProjectById(id);
 
         if (project == null)
         {
-            return NotFound(id);
+            return NotFound(new ErrorDTO { Message = "Project not found" });
         }
 
         return Ok(project);
     }
 
     [HttpGet]
+    [ProducesResponseType<IEnumerable<Project>>(StatusCodes.Status200OK)]
+    [Produces("application/json")]
     public async Task<IActionResult> GetAllProjects()
     {
         var projects = await _repository.Project.GetAllProjects();
@@ -39,11 +43,11 @@ public class ProjectController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType<Project>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
     public async Task<IActionResult> PostProject([FromBody] ProjectCreateDTO project)
     {
-        Console.WriteLine(project);
-        Console.WriteLine(ModelState.IsValid);
-
         if (!ModelState.IsValid)
         {
             return BadRequest(new ErrorDTO { Message = "Invalid model object" });
