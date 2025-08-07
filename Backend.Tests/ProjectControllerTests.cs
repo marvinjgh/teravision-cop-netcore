@@ -2,11 +2,12 @@
 using Backend.Service.Contracts;
 using Backend.Service.DataTransferObjects;
 using Backend.Service.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
 namespace Backend.Tests;
-#pragma warning disable CS8600, CS8602
+#pragma warning disable CS8600, CS8602, CS8625
 public class ProjectControllerTests
 {
     [Fact]
@@ -182,5 +183,154 @@ public class ProjectControllerTests
             Times.Once
         );
     }
+
+    [Fact]
+    public async Task DeleteProject_ReturnsOk()
+    {
+        //Arrange
+        long testId = 1;
+        Project testProject = new() { Id = testId };
+
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        mockRepo.Setup(repo => repo.Project.GetProjectById(testId))
+            .ReturnsAsync(testProject);
+
+        var controller = new ProjectController(mockRepo.Object);
+
+        //Act
+        var result = await controller.DeleteProject(testId);
+
+        //Assert
+        var okObjectResult = Assert.IsType<OkResult>(result);
+        Assert.NotNull(okObjectResult);
+        mockRepo.Verify(
+            repo => repo.Project.DeleteProject(testProject),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task DeleteProject_ReturnsNotFound()
+    {
+        // Arrange
+        long testId = 1;
+        Project testProject = new() { Id = testId };
+
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        mockRepo.Setup(repo => repo.Project.GetProjectById(testId))
+            .ReturnsAsync((Project?)null);
+
+        var controller = new ProjectController(mockRepo.Object);
+
+        //Act
+        var result = await controller.DeleteProject(testId);
+
+        //Assert
+        var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(result);
+        ErrorDTO error = (ErrorDTO)notFoundObjectResult.Value;
+        Assert.Equal("Project not found", error.Message);
+
+        mockRepo.Verify(
+            repo => repo.Project.DeleteProject(testProject),
+            Times.Never
+        );
+    }
+
+    [Fact]
+    public async Task UpdateProject_ReturnBadRequest()
+    {
+        // Global arrange
+        long testId = 1;
+        ErrorDTO error = null;
+        Mock<IRepositoryWrapper> mockRepository = null;
+        ProjectController controller = null;
+        var projectUpdateDTO = new ProjectUpdateDTO
+        {
+            Name = "Test Project2",
+            Description = "Test Description2"
+        };
+        // Arrage 1
+        mockRepository = new Mock<IRepositoryWrapper>();
+        controller = new ProjectController(mockRepository.Object);
+
+        // Act 1
+        var result1 = await controller.PutProject(1, null);
+
+        // Assert 1
+        var putResult1 = Assert.IsType<BadRequestObjectResult>(result1);
+        error = (ErrorDTO)putResult1.Value;
+        Assert.Equal("Project object is null", error.Message);
+
+
+        // Arrage 2
+        mockRepository = new Mock<IRepositoryWrapper>();
+        mockRepository.Setup(repo => repo.Project.GetProjectById(testId))
+            .ReturnsAsync(() => null);
+
+        controller = new ProjectController(mockRepository.Object);
+
+        // Act 2
+        var result2 = await controller.PutProject(1, projectUpdateDTO);
+
+        // Assert 2
+        var createdResult = Assert.IsType<NotFoundObjectResult>(result2);
+        error = (ErrorDTO)createdResult.Value;
+        Assert.Equal("Project not found", error.Message);
+    }
+
+    [Fact]
+    public async Task UpdateProject_ReturnOk()
+    {
+        // Arrage
+        long testId = 1;
+        var projectUpdateDTO = new ProjectUpdateDTO
+        {
+            Name = "Test Project",
+            Description = "Test Description"
+        };
+        var now = DateTimeOffset.UtcNow;
+        var mockRepository = new Mock<IRepositoryWrapper>();
+        var mockProjectRepo = new Mock<IProjectRepository>();
+
+        mockProjectRepo.Setup(r => r.UpdateProject(It.IsAny<Project>()))
+        .Callback<Project>(p =>
+        {
+            p.Id = 1;
+            p.Name = projectUpdateDTO.Name;
+            p.Description = projectUpdateDTO.Description;
+            p.CreatedAt = now;
+        });
+        mockProjectRepo.Setup(r => r.GetProjectById(It.IsAny<long>()))
+        .Callback<long>(id => { })
+       .ReturnsAsync(new Project
+       {
+           Id = 1,
+           Name = "Project 1",
+           Description = null,
+           CreatedAt = now
+       });
+
+        mockRepository.Setup(r => r.Project).Returns(mockProjectRepo.Object);
+        mockRepository.Setup(r => r.Save()).Returns(Task.CompletedTask);
+        var controller = new ProjectController(mockRepository.Object);
+
+        // Act
+        var result = await controller.PutProject(1, projectUpdateDTO);
+        Console.WriteLine(result);
+        // Assert
+        var putResult = Assert.IsType<NoContentResult>(result);
+        mockRepository.Verify(
+            repo => repo.Project.GetProjectById(testId),
+            Times.Once
+        );
+        mockRepository.Verify(
+            repo => repo.Project.UpdateProject(It.IsAny<Project>()),
+            Times.Once
+        );
+        mockRepository.Verify(
+            repo => repo.Save(),
+            Times.Once
+        );
+    }
 }
-#pragma warning restore CS8600, CS8602
+#pragma warning restore CS8600, CS8602, CS8625

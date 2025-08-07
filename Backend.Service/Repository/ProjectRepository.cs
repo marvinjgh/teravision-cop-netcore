@@ -23,4 +23,7 @@ public class ProjectRepository : RepositoryBase<Project>, IProjectRepository
     }
 
     public void CreateProject(Project project) => Create(project);
+    public void UpdateProject(Project project) => Update(project);
+    public void DeleteProject(Project project) => Delete(project);
+
 }
