@@ -26,3 +26,11 @@ bld/
 
 # Visual Studio Code
 .vscode/
+
+# Sqlite DB
+*.db
+*.sqlite 
+*.sqlite3
+*.db3
+*.s3db
+*.sl3

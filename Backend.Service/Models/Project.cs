@@ -10,7 +10,6 @@ public class Project : BaseEntity
     [Column("ProjectId")]
     public long Id { get; set; }
 
-    [Required(ErrorMessage = "Name is required")]
     [StringLength(64, ErrorMessage = "Name cannot be longer than 64 characters")]
     public string? Name { get; set; }
 

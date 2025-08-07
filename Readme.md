@@ -1,6 +1,6 @@
 # Teravision - CoP .Net Core
 
-This is a .net Core API.
+This is a .Net Core Web API.
 
 ## Getting Started
 
@@ -13,7 +13,25 @@ dotnet restore
 ``` sh
 cd Backend.API
 
+# start server
 dotnet run --launch-profile https
+```
+
+### Open Swagger page
+
+[https://localhost:7000/swagger](https://localhost:7000/swagger) or [http://localhost:5200/swagger](http://localhost:5200/swagger)
+
+
+### DB
+``` sh
+# Create / update the Sqlite database
+cd Backend.Service
+dotnet ef database update -s ../Backend.API/Backend.API.csproj
+```
+
+### Developer https certificate
+``` sh
+dotnet dev-certs https --trust
 ```
 
 ## Testing
@@ -44,4 +62,25 @@ dotnet new xunit -o Backend.Tests
 dotnet sln add ./Backend.Tests/Backend.Tests.csproj
 dotnet add ./Backend.Tests/Backend.Tests.csproj reference ./Backend.API/Backend.API.csproj
 
+```
+
+### EF and migrations
+
+``` sh
+# install ef global
+dotnet tool install --global dotnet-ef
+
+## following commands execute inside Backend.Service
+
+# drop the database
+dotnet ef database drop
+
+# Create a migration
+dotnet ef migrations add InitialMigration -s ../Backend.API/Backend.API.csproj
+
+# Removes the last migration
+dotnet ef migrations remove -s ../Backend.API/Backend.API.csproj
+
+# Update database
+dotnet ef database update -s ../Backend.API/Backend.API.csproj
 ```
