@@ -6,9 +6,8 @@ public class ProjectUpdateDTO
 {
     [Required(ErrorMessage = "Name is required")]
     [StringLength(64, ErrorMessage = "Name cannot be longer than 64 characters")]
-    public string? Name { get; set; }
-
-    public string? Description { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 
     public override string ToString()
     {

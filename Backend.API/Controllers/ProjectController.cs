@@ -70,7 +70,7 @@ public class ProjectController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType<Project>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<IActionResult> PutProject(long id, [FromBody] ProjectUpdateDTO updateProject)
@@ -99,7 +99,7 @@ public class ProjectController : ControllerBase
 
 
     [HttpDelete("{id}")]
-    [ProducesResponseType<OkResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<IActionResult> DeleteProject(long id)
@@ -114,7 +114,6 @@ public class ProjectController : ControllerBase
         _repository.Project.DeleteProject(project);
         await _repository.Save();
 
-        return Ok();
+        return NoContent();
     }
-    
 }

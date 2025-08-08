@@ -201,10 +201,14 @@ public class ProjectControllerTests
         var result = await controller.DeleteProject(testId);
 
         //Assert
-        var okObjectResult = Assert.IsType<OkResult>(result);
+        var okObjectResult = Assert.IsType<NoContentResult>(result);
         Assert.NotNull(okObjectResult);
         mockRepo.Verify(
             repo => repo.Project.DeleteProject(testProject),
+            Times.Once
+        );
+        mockRepo.Verify(
+            repo => repo.Save(),
             Times.Once
         );
     }
@@ -233,6 +237,10 @@ public class ProjectControllerTests
         mockRepo.Verify(
             repo => repo.Project.DeleteProject(testProject),
             Times.Never
+        );
+        mockRepo.Verify(
+            repo => repo.Save(),
+            Times.Once
         );
     }
 
