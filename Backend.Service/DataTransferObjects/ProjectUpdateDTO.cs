@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend.Service.DataTransferObjects;
 
-public class ProjectCreateDTO
+public class ProjectUpdateDTO
 {
     [Required(ErrorMessage = "Name is required")]
     [StringLength(64, ErrorMessage = "Name cannot be longer than 64 characters")]

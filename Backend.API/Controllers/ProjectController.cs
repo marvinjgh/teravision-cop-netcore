@@ -48,6 +48,10 @@ public class ProjectController : ControllerBase
     [Produces("application/json")]
     public async Task<IActionResult> PostProject([FromBody] ProjectCreateDTO project)
     {
+        if (project is null)
+        {
+            return BadRequest("Project object is null");
+        }
         if (!ModelState.IsValid)
         {
             return BadRequest(new ErrorDTO { Message = "Invalid model object" });
@@ -63,5 +67,53 @@ public class ProjectController : ControllerBase
         await _repository.Save();
 
         return CreatedAtAction(nameof(GetProject), new { id = newProject.Id }, newProject);
+    }
+
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<IActionResult> PutProject(long id, [FromBody] ProjectUpdateDTO updateProject)
+    {
+        if (updateProject is null)
+        {
+
+            return BadRequest(new ErrorDTO { Message = "Project object is null" });
+        }
+
+        var project = await _repository.Project.GetProjectById(id);
+
+        if (project == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Project not found" });
+        }
+
+        project.Name = updateProject.Name;
+        project.Description = updateProject.Description;
+
+        _repository.Project.UpdateProject(project);
+        await _repository.Save();
+
+        return NoContent();
+    }
+
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<IActionResult> DeleteProject(long id)
+    {
+        var project = await _repository.Project.GetProjectById(id);
+
+        if (project == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Project not found" });
+        }
+
+        _repository.Project.DeleteProject(project);
+        await _repository.Save();
+
+        return NoContent();
     }
 }
