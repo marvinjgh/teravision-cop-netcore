@@ -6,7 +6,7 @@ WORKDIR /app
 # Copia el archivo de la solución y los archivos de proyectos para restaurar las dependencias
 COPY ["*.sln", "./"]
 COPY ["Backend.API/Backend.API.csproj", "Backend.API/"]
-RUN dotnet restore
+RUN dotnet restore "Backend.API/Backend.API.csproj"
 
 # Copia el resto del código y compila el proyecto
 COPY . .
