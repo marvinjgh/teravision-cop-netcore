@@ -1,14 +1,15 @@
-# Usa la imagen SDK de .NET para compilar la aplicación
-# Esto se conoce como una "etapa de compilación"
+# Usa la imagen SDK de .NET para compilar la aplicación (etapa de compilación)
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-# Copia el archivo de la solución y los archivos de proyectos para restaurar las dependencias
-COPY ["*.sln", "./"]
+# Copia los archivos de la solución y los proyectos para restaurar dependencias
+# Corrige el nombre del archivo de la solución para que coincida con tu repositorio
+COPY ["teravision-cop-backend.sln", "./"]
 COPY ["Backend.API/Backend.API.csproj", "Backend.API/"]
-RUN dotnet restore "Backend.API/Backend.API.csproj"
+# Restaura todas las dependencias de la solución
+RUN dotnet restore "teravision-cop-backend.sln"
 
-# Copia el resto del código y compila el proyecto
+# Copia el resto del código y compila el proyecto de la API
 COPY . .
 WORKDIR "/app/Backend.API"
 RUN dotnet build "Backend.API.csproj" -c Release -o /app/build
@@ -17,13 +18,12 @@ RUN dotnet build "Backend.API.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "Backend.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Usa la imagen de runtime de ASP.NET para la aplicación final
-# Esta es una "etapa de producción" que es más ligera y segura
+# Usa la imagen de runtime de ASP.NET para la aplicación final (etapa de producción)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-# Define el puerto que la aplicación escuchará. App Platform lo expondrá.
+# Define el puerto que la aplicación escuchará
 ENV ASPNETCORE_URLS=http://+:8080
 
 # Inicia la aplicación
