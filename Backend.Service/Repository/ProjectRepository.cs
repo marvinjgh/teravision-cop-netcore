@@ -5,11 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Service.Repository;
 
-public class ProjectRepository : RepositoryBase<Project>, IProjectRepository
+public class ProjectRepository(RepositoryContext repositoryContext) : RepositoryBase<Project>(repositoryContext), IProjectRepository
 {
-    public ProjectRepository(RepositoryContext repositoryContext) : base(repositoryContext)
-    {
-    }
 
     public Task<Project?> GetProjectById(long projectId)
     {

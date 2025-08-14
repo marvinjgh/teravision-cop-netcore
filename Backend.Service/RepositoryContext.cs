@@ -44,14 +44,14 @@ public class RepositoryContext : DbContext
             {
                 entry.Property("CreatedAt").CurrentValue = now;
             }
-            else if (entry.State == EntityState.Modified && entry.Metadata.FindProperty("UpdatedAt") != null)
-            {
-                entry.Property("UpdatedAt").CurrentValue = now;
-            }
+
+            entry.Property("UpdatedAt").CurrentValue = now;
+
         }
         return base.SaveChangesAsync(cancellationToken);
     }
 
-    public DbSet<Project> TodoItems { get; set; }
+    public DbSet<Project> Projects { get; set; }
+    public DbSet<TaskEntity> Tasks { get; set; }
 }
 

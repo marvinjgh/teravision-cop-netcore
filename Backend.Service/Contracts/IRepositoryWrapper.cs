@@ -2,6 +2,7 @@
 
 public interface IRepositoryWrapper
 {
-    IProjectRepository Project { get; }
+    IProjectRepository ProjectRepository { get; }
+    ITaskRepository TaskRepository { get; }
     Task Save();
 }
