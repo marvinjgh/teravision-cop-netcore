@@ -10,9 +10,13 @@ public static class ServiceExtensions
 {
     public static void ConfigureDBContext(this IServiceCollection services, IConfiguration config)
     {
-        var connectionString = config["dbserverconnection:connectionString"];
-
-        services.AddDbContext<RepositoryContext>(opt => opt.UseSqlite(connectionString));
+        services.AddDbContext<RepositoryContext>(
+                opt => opt
+                    .UseSqlServer(
+                        config["ConnectionStrings:DefaultConnection"],
+                        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure()
+                    )
+            );
     }
     public static void ConfigureRepositoryWrapper(this IServiceCollection services)
     {
@@ -31,8 +35,8 @@ public static class ServiceExtensions
                     Description = "An API for CoP."
                 };
                 document.Servers = [
-                    new OpenApiServer{ Url= "https://localhost:7000/"},
-                    new OpenApiServer{ Url= "http://localhost:5200/"}
+                    new OpenApiServer{ Url= "https://localhost:8081/"},
+                    new OpenApiServer{ Url= "http://localhost:8081/"}
                 ];
                 return Task.CompletedTask;
             });
@@ -50,5 +54,23 @@ public static class ServiceExtensions
                 return Task.CompletedTask;
             });
         });
+    }
+
+    public static void ApplyMigrations(this IServiceProvider services)
+    {
+        var scope = services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RepositoryContext>();
+        if (dbContext.Database.HasPendingModelChanges())
+        {
+            try
+            {
+                dbContext.Database.Migrate();
+            }
+            catch (Exception exception)
+            {
+                // TODO Add a logger
+                Console.WriteLine(exception.Message);
+            }
+        }
     }
 }
