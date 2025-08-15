@@ -19,7 +19,7 @@ dotnet run --launch-profile https
 
 ### Open Swagger page
 
-[https://localhost:7000/swagger](https://localhost:7000/swagger) or [http://localhost:5200/swagger](http://localhost:5200/swagger)
+[https://localhost:8081/swagger](https://localhost:8081/swagger) or [http://localhost:8080/swagger](http://localhost:8080/swagger)
 
 
 ### DB
@@ -86,4 +86,28 @@ dotnet ef migrations remove -s ../Backend.API/Backend.API.csproj
 
 # Update database
 dotnet ef database update -s ../Backend.API/Backend.API.csproj
+```
+
+## Docker
+
+To create the Backend Image you can use
+
+``` sh
+docker build -t teravision/cop-backend:latest .
+```
+
+Some build arguments that can be use are:
+- BUILD_CONFIGURATION=[ Debug | Release ]
+- USE_APP_HOST=[ true | false ]
+
+``` sh
+docker build -t teravision/cop-backend:latest --build-arg BUILD_CONFIGURATION=Release --build-arg USE_APP_HOST=false .
+```
+
+### Using compose
+
+To use the docker compose, is required to has a `.env` file, can user the `.env.example` has a start point.
+
+``` sh
+docker compose - teravision-cop up -d --build -p
 ```

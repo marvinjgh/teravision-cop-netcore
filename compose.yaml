@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  # Servicio de la base de datos SQL Server
+  sqldata:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cop-db
+    environment:
+      SA_PASSWORD: ${DB_SA_PASSWORD}
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433" # Mapea el puerto del host al puerto del contenedor
+    volumes:
+      - sql-data-volume:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${DB_SA_PASSWORD}", "-Q", "SELECT 1", "-C"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - app-network
+  project-api:
+    image: teravision/cop-backend:latest # Nombre de la imagen que construiremos
+    container_name: cop-backend
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: final
+      args:
+        - BUILD_CONFIGURATION=Release
+        - USE_APP_HOST=true # habilitar https
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development # Para tener Swagger UI
+      - DB_SA_PASSWORD=${DB_SA_PASSWORD}
+      - ConnectionStrings__DefaultConnection=Server=sqldata,1433;Database=COPDB;User Id=sa;Password=${DB_SA_PASSWORD};TrustServerCertificate=true
+    #- DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+    ports:
+      - 8080:8080
+      - 8081:8081
+    depends_on:
+      sqldata:
+        condition: service_healthy # ¡Importante! Espera a que la BD esté saludable
+    networks:
+      - app-network
+volumes:
+  sql-data-volume:
+
+networks:
+  app-network:
+    driver: bridge

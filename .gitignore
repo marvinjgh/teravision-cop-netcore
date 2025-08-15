@@ -34,3 +34,7 @@ bld/
 *.db3
 *.s3db
 *.sl3
+
+# Envs
+.env*
+!.env.example
