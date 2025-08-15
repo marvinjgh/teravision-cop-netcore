@@ -2,28 +2,31 @@
 
 namespace Backend.Service.Repository;
 
-public class RepositoryWrapper : IRepositoryWrapper
+public class RepositoryWrapper(RepositoryContext repositoryContext) : IRepositoryWrapper
 {
-    private RepositoryContext _repoContext;
+
+#pragma warning disable CS8618
     private IProjectRepository _project;
-    public IProjectRepository Project
+    private ITaskRepository _task;
+#pragma warning restore CS8618
+    public IProjectRepository ProjectRepository
     {
         get
         {
-            _project ??= new ProjectRepository(_repoContext);
+            _project ??= new ProjectRepository(repositoryContext);
             return _project;
         }
     }
-
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-    public RepositoryWrapper(RepositoryContext repositoryContext)
+    public ITaskRepository TaskRepository
     {
-        _repoContext = repositoryContext;
+        get
+        {
+            _task ??= new TaskRepository(repositoryContext);
+            return _task;
+        }
     }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-
     public async Task Save()
     {
-        await _repoContext.SaveChangesAsync();
+        await repositoryContext.SaveChangesAsync();
     }
 }

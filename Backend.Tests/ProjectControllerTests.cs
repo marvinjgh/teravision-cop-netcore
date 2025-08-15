@@ -2,7 +2,6 @@
 using Backend.Service.Contracts;
 using Backend.Service.DataTransferObjects;
 using Backend.Service.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -17,7 +16,7 @@ public class ProjectControllerTests
         long testId = 1;
 
         var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.Project.GetProjectById(testId))
+        mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId))
             .ReturnsAsync((Project?)null);
 
         var controller = new ProjectController(mockRepo.Object);
@@ -31,7 +30,7 @@ public class ProjectControllerTests
         Assert.Equal("Project not found", error.Message);
 
         mockRepo.Verify(
-            repo => repo.Project.GetProjectById(testId),
+            repo => repo.ProjectRepository.GetProjectById(testId),
             Times.Once
         );
     }
@@ -41,14 +40,17 @@ public class ProjectControllerTests
     {
         // Arrange
         long testId = 1;
-
+        var now = DateTimeOffset.UtcNow;
         var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.Project.GetProjectById(testId))
-            .ReturnsAsync(new Project
-            {
-                Id = 1,
-                Name = "Project 1"
-            });
+        var projectEntity = new Project
+        {
+            Id = 1,
+            Name = "Project 1",
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+        mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId))
+            .ReturnsAsync(projectEntity);
 
         var controller = new ProjectController(mockRepo.Object);
 
@@ -57,20 +59,16 @@ public class ProjectControllerTests
 
         //Assert
 
-        var okObjectResult = Assert.IsType<OkObjectResult>(result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var projectResult = (Project)okResult.Value;
 
-        var dtoTest = new Project
-        {
-            Id = 1,
-            Name = "Project 1"
-        };
-        var dtoResult = (Project)okObjectResult.Value;
-
-        Assert.Equal(dtoTest.Id, dtoResult.Id);
-        Assert.Equal(dtoTest.Name, dtoResult.Name);
+        Assert.Equal(projectEntity.Id, projectResult.Id);
+        Assert.Equal(projectEntity.Name, projectResult.Name);
+        Assert.Equal(projectEntity.CreatedAt, projectResult.CreatedAt);
+        Assert.Equal(projectEntity.UpdatedAt, projectResult.UpdatedAt);
 
         mockRepo.Verify(
-            repo => repo.Project.GetProjectById(testId),
+            repo => repo.ProjectRepository.GetProjectById(testId),
             Times.Once
         );
     }
@@ -80,12 +78,40 @@ public class ProjectControllerTests
     {
         // Arrange
         var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.Project.GetAllProjects())
+        mockRepo.Setup(repo => repo.ProjectRepository.GetAllProjects())
             .ReturnsAsync(new List<Project>
             {
-                new Project { Id = 1, Name = "Project 1" },
-                new Project { Id = 2, Name = "Project 2" }
+                new() { Id = 1, Name = "Project 1", IsDeleted = false},
+                new() { Id = 2, Name = "Project 2", IsDeleted = true }
             });
+
+        var controller = new ProjectController(mockRepo.Object);
+
+        //Act
+        var result = await controller.GetAllProjects(showAll: true);
+
+        //Assert
+        var okObjectResult = Assert.IsType<OkObjectResult>(result);
+        var projects = Assert.IsAssignableFrom<List<Project>>(okObjectResult.Value);
+        Assert.Equal(2, projects.Count);
+
+        mockRepo.Verify(
+            repo => repo.ProjectRepository.GetAllProjects(),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task GetAllActiveProjects_ReturnsOk()
+    {
+        // Arrange
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        mockRepo.Setup(repo => repo.ProjectRepository.GetAllActiveProjects())
+            .ReturnsAsync(new List<Project>
+            {
+                new() { Id = 1, Name = "Project 1", IsDeleted = false},
+                new() { Id = 2, Name = "Project 2", IsDeleted = true}
+            }.Where(project => !project.IsDeleted).ToList());
 
         var controller = new ProjectController(mockRepo.Object);
 
@@ -95,10 +121,10 @@ public class ProjectControllerTests
         //Assert
         var okObjectResult = Assert.IsType<OkObjectResult>(result);
         var projects = Assert.IsAssignableFrom<List<Project>>(okObjectResult.Value);
-        Assert.Equal(2, projects.Count);
+        Assert.Single(projects);
 
         mockRepo.Verify(
-            repo => repo.Project.GetAllProjects(),
+            repo => repo.ProjectRepository.GetAllActiveProjects(),
             Times.Once
         );
     }
@@ -123,7 +149,7 @@ public class ProjectControllerTests
         Assert.Equal("Invalid model object", error.Message);
 
         mockRepository.Verify(
-            repo => repo.Project.CreateProject(It.IsAny<Project>()),
+            repo => repo.ProjectRepository.CreateProject(It.IsAny<Project>()),
             Times.Never
         );
         mockRepository.Verify(
@@ -136,6 +162,7 @@ public class ProjectControllerTests
     public async Task PostProject_ReturnsCreatedAtAction()
     {
         // Arrange: create mocks and simulate new project Id assignment
+        long testId = 1;
         var now = DateTimeOffset.UtcNow;
         var projectCreateDTO = new ProjectCreateDTO
         {
@@ -152,8 +179,9 @@ public class ProjectControllerTests
                 p.Name = projectCreateDTO.Name;
                 p.Description = projectCreateDTO.Description;
                 p.CreatedAt = now;
+                p.UpdatedAt = now;
             });
-        mockRepository.Setup(r => r.Project).Returns(mockProjectRepo.Object);
+        mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
         mockRepository.Setup(r => r.Save()).Returns(Task.CompletedTask);
 
         var controller = new ProjectController(mockRepository.Object);
@@ -164,18 +192,19 @@ public class ProjectControllerTests
         // Assert
         var createdResult = Assert.IsType<CreatedAtActionResult>(result);
         Assert.NotNull(createdResult.RouteValues);
-        Assert.Equal((long)1, createdResult.RouteValues["id"]);
+        Assert.Equal(testId, createdResult.RouteValues["id"]);
 
         var resultProject = (Project)createdResult.Value;
 
-        Assert.Equal(1, resultProject.Id);
+        Assert.Equal(testId, resultProject.Id);
         Assert.Equal(projectCreateDTO.Name, resultProject.Name);
         Assert.Equal(projectCreateDTO.Description, resultProject.Description);
         Assert.Equal(now, resultProject.CreatedAt);
+        Assert.Equal(now, resultProject.UpdatedAt);
 
         // Opcional: Verificar que el método Save nunca fue llamado.
         mockRepository.Verify(
-            repo => repo.Project.CreateProject(It.IsAny<Project>()),
+            repo => repo.ProjectRepository.CreateProject(It.IsAny<Project>()),
             Times.Once
         );
         mockRepository.Verify(
@@ -189,28 +218,54 @@ public class ProjectControllerTests
     {
         //Arrange
         long testId = 1;
-        Project testProject = new() { Id = testId };
-
+        var now = DateTimeOffset.UtcNow;
+        var project = new Project { Id = testId, Name = "Project 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
         var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.Project.GetProjectById(testId))
-            .ReturnsAsync(testProject);
+        var mockProjectRepo = new Mock<IProjectRepository>();
+
+        mockProjectRepo.Setup(r => r.GetProjectById(testId)).ReturnsAsync(project);
+        mockRepo.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
+        mockRepo.Setup(r => r.Save()).Returns(Task.CompletedTask);
 
         var controller = new ProjectController(mockRepo.Object);
 
-        //Act
+        // Act
         var result = await controller.DeleteProject(testId);
 
-        //Assert
-        var okObjectResult = Assert.IsType<NoContentResult>(result);
-        Assert.NotNull(okObjectResult);
-        mockRepo.Verify(
-            repo => repo.Project.DeleteProject(testProject),
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+
+        mockProjectRepo.Verify(
+            repo => repo.GetProjectById(It.Is<long>(id => id == testId)),
             Times.Once
         );
-        mockRepo.Verify(
-            repo => repo.Save(),
-            Times.Once
-        );
+        mockProjectRepo.Verify(r => r.UpdateProject(It.Is<Project>(p => p.IsDeleted)), Times.Once);
+        mockRepo.Verify(r => r.Save(), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteProject_SoftDeletesProject()//copilot
+    {
+        // Arrange
+        long testId = 1;
+        var now = DateTimeOffset.UtcNow;
+        var project = new Project { Id = testId, Name = "Project 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        var mockProjectRepo = new Mock<IProjectRepository>();
+
+        mockProjectRepo.Setup(r => r.GetProjectById(testId)).ReturnsAsync(project);
+        mockRepo.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
+        mockRepo.Setup(r => r.Save()).Returns(Task.CompletedTask);
+
+        var controller = new ProjectController(mockRepo.Object);
+
+        // Act
+        var result = await controller.DeleteProject(testId);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+        mockProjectRepo.Verify(r => r.UpdateProject(It.Is<Project>(p => p.IsDeleted)), Times.Once);
+        mockRepo.Verify(r => r.Save(), Times.Once);
     }
 
     [Fact]
@@ -221,7 +276,7 @@ public class ProjectControllerTests
         Project testProject = new() { Id = testId };
 
         var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.Project.GetProjectById(testId))
+        mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId))
             .ReturnsAsync((Project?)null);
 
         var controller = new ProjectController(mockRepo.Object);
@@ -235,12 +290,12 @@ public class ProjectControllerTests
         Assert.Equal("Project not found", error.Message);
 
         mockRepo.Verify(
-            repo => repo.Project.DeleteProject(testProject),
-            Times.Never
+            repo => repo.ProjectRepository.GetProjectById(testId),
+            Times.Once
         );
         mockRepo.Verify(
-            repo => repo.Save(),
-            Times.Once
+            repo => repo.ProjectRepository.DeleteProject(testProject),
+            Times.Never
         );
     }
 
@@ -272,7 +327,7 @@ public class ProjectControllerTests
 
         // Arrage 2
         mockRepository = new Mock<IRepositoryWrapper>();
-        mockRepository.Setup(repo => repo.Project.GetProjectById(testId))
+        mockRepository.Setup(repo => repo.ProjectRepository.GetProjectById(testId))
             .ReturnsAsync(() => null);
 
         controller = new ProjectController(mockRepository.Object);
@@ -291,54 +346,50 @@ public class ProjectControllerTests
     {
         // Arrage
         long testId = 1;
-        var projectUpdateDTO = new ProjectUpdateDTO
+        var projectDTO = new ProjectUpdateDTO
         {
             Name = "Test Project",
             Description = "Test Description"
         };
         var now = DateTimeOffset.UtcNow;
+        var project = new Project { Id = testId, Name = "Project 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
         var mockRepository = new Mock<IRepositoryWrapper>();
         var mockProjectRepo = new Mock<IProjectRepository>();
 
-        mockProjectRepo.Setup(r => r.UpdateProject(It.IsAny<Project>()))
-        .Callback<Project>(p =>
+        mockProjectRepo.Setup(r => r.GetProjectById(testId)).ReturnsAsync(project);
+        mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
+        mockProjectRepo.Setup(r => r.UpdateProject(It.IsAny<Project>())).Callback<Project>(p =>
         {
-            p.Id = 1;
-            p.Name = projectUpdateDTO.Name;
-            p.Description = projectUpdateDTO.Description;
-            p.CreatedAt = now;
+            p.Name = projectDTO.Name;
+            p.Description = projectDTO.Description;
+            p.UpdatedAt = now.AddMinutes(1);
         });
-        mockProjectRepo.Setup(r => r.GetProjectById(It.IsAny<long>()))
-        .Callback<long>(id => { })
-       .ReturnsAsync(new Project
-       {
-           Id = 1,
-           Name = "Project 1",
-           Description = null,
-           CreatedAt = now
-       });
-
-        mockRepository.Setup(r => r.Project).Returns(mockProjectRepo.Object);
         mockRepository.Setup(r => r.Save()).Returns(Task.CompletedTask);
+
         var controller = new ProjectController(mockRepository.Object);
 
         // Act
-        var result = await controller.PutProject(1, projectUpdateDTO);
+        var result = await controller.PutProject(1, projectDTO);
         Console.WriteLine(result);
         // Assert
-        var putResult = Assert.IsType<NoContentResult>(result);
-        mockRepository.Verify(
-            repo => repo.Project.GetProjectById(testId),
+        var putResult = Assert.IsType<OkObjectResult>(result);
+
+        var resultProject = (Project)putResult.Value;
+
+        Assert.Equal(project.Id, resultProject.Id);
+        Assert.Equal(projectDTO.Name, resultProject.Name);
+        Assert.Equal(projectDTO.Description, resultProject.Description);
+        Assert.Equal(project.CreatedAt, resultProject.CreatedAt);
+        Assert.Equal(now.AddMinutes(1), resultProject.UpdatedAt);
+
+        mockProjectRepo.Verify(
+            repo => repo.GetProjectById(It.Is<long>(id => id == testId)),
             Times.Once
         );
-        mockRepository.Verify(
-            repo => repo.Project.UpdateProject(It.IsAny<Project>()),
-            Times.Once
-        );
-        mockRepository.Verify(
-            repo => repo.Save(),
-            Times.Once
-        );
+        mockProjectRepo.Verify(r => r.UpdateProject(It.IsAny<Project>()), Times.Once);
+        mockRepository.Verify(r => r.Save(), Times.Once);
     }
 }
+
+
 #pragma warning restore CS8600, CS8602, CS8625

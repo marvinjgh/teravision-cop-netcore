@@ -5,12 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Service.Repository;
 
-public class ProjectRepository : RepositoryBase<Project>, IProjectRepository
+public class ProjectRepository(RepositoryContext repositoryContext) : RepositoryBase<Project>(repositoryContext), IProjectRepository
 {
-    public ProjectRepository(RepositoryContext repositoryContext) : base(repositoryContext)
-    {
-    }
-
     public Task<Project?> GetProjectById(long projectId)
     {
         return FindByCondition(project => project.Id == projectId).FirstOrDefaultAsync();
@@ -18,8 +14,12 @@ public class ProjectRepository : RepositoryBase<Project>, IProjectRepository
 
     public async Task<IEnumerable<Project>> GetAllProjects()
     {
-        return await FindAll()
-            .ToListAsync();
+        return await FindAll().ToListAsync();
+    }
+
+    public async Task<IEnumerable<Project>> GetAllActiveProjects()
+    {
+        return await FindByCondition(project => !project.IsDeleted).ToListAsync();
     }
 
     public void CreateProject(Project project) => Create(project);
