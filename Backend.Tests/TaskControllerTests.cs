@@ -84,19 +84,47 @@ public class TaskControllerTests
         mockRepo.Setup(repo => repo.TaskRepository.GetAllTasks())
             .ReturnsAsync(new List<TaskEntity>
             {
-                 new() { Id = 1, Name = "Task 1", Description = "Description 1" },
-                 new() { Id = 2, Name = "Task 2", Description = "Description 2" }
+                 new() { Id = 1, Name = "Task 1", Description = "Description 1", IsDeleted = false },
+                 new() { Id = 2, Name = "Task 2", Description = "Description 2", IsDeleted = true }
             });
 
         var controller = new TaskController(mockRepo.Object);
 
         //Act
-        var result = await controller.GetAllTasks();
+        var result = await controller.GetAllTasks(showAll: true);
 
         //Assert
         var okObjectResult = Assert.IsType<OkObjectResult>(result);
         var tasks = Assert.IsAssignableFrom<List<TaskEntity>>(okObjectResult.Value);
         Assert.Equal(2, tasks.Count);
+
+        mockRepo.Verify(
+           repo => repo.TaskRepository.GetAllTasks(),
+           Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task GetAllActiveTasks_ReturnsOk()
+    {
+        // Arrange
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        mockRepo.Setup(repo => repo.TaskRepository.GetAllTasks())
+            .ReturnsAsync(new List<TaskEntity>
+            {
+                 new() { Id = 1, Name = "Task 1", Description = "Description 1", IsDeleted = false },
+                 new() { Id = 2, Name = "Task 2", Description = "Description 2", IsDeleted = true }
+            }.Where(task => !task.IsDeleted).ToList());
+
+        var controller = new TaskController(mockRepo.Object);
+
+        //Act
+        var result = await controller.GetAllTasks(showAll: true);
+
+        //Assert
+        var okObjectResult = Assert.IsType<OkObjectResult>(result);
+        var tasks = Assert.IsAssignableFrom<List<TaskEntity>>(okObjectResult.Value);
+        Assert.Single(tasks);
 
         mockRepo.Verify(
            repo => repo.TaskRepository.GetAllTasks(),

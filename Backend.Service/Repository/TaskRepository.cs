@@ -17,6 +17,11 @@ public class TaskRepository(RepositoryContext repositoryContext) : RepositoryBas
         return await FindAll().ToListAsync();
     }
 
+    public async Task<IEnumerable<TaskEntity>> GetAllActiveTasks()
+    {
+        return await FindByCondition(task => !task.IsDeleted).ToListAsync();
+    }
+
     public void CreateTask(TaskEntity task) => Create(task);
     public void UpdateTask(TaskEntity task) => Update(task);
     public void DeleteTask(TaskEntity task) => Delete(task);

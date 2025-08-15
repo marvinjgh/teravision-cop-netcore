@@ -28,9 +28,9 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
     [HttpGet]
     [ProducesResponseType<IEnumerable<Project>>(StatusCodes.Status200OK)]
     [Produces("application/json")]
-    public async Task<IActionResult> GetAllProjects()
+    public async Task<IActionResult> GetAllProjects([FromQuery] bool showAll = false)
     {
-        var projects = await repository.ProjectRepository.GetAllProjects();
+        var projects = await (showAll ? repository.ProjectRepository.GetAllProjects() : repository.ProjectRepository.GetAllActiveProjects());
 
         return Ok(projects);
     }
@@ -109,7 +109,8 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
             return NotFound(new ErrorDTO { Message = "Project not found" });
         }
 
-        repository.ProjectRepository.DeleteProject(project);
+        project.IsDeleted = true;
+        repository.ProjectRepository.UpdateProject(project);
         await repository.Save();
 
         return NoContent();

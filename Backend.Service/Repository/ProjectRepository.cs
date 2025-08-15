@@ -7,7 +7,6 @@ namespace Backend.Service.Repository;
 
 public class ProjectRepository(RepositoryContext repositoryContext) : RepositoryBase<Project>(repositoryContext), IProjectRepository
 {
-
     public Task<Project?> GetProjectById(long projectId)
     {
         return FindByCondition(project => project.Id == projectId).FirstOrDefaultAsync();
@@ -15,8 +14,12 @@ public class ProjectRepository(RepositoryContext repositoryContext) : Repository
 
     public async Task<IEnumerable<Project>> GetAllProjects()
     {
-        return await FindAll()
-            .ToListAsync();
+        return await FindAll().ToListAsync();
+    }
+
+    public async Task<IEnumerable<Project>> GetAllActiveProjects()
+    {
+        return await FindByCondition(project => !project.IsDeleted).ToListAsync();
     }
 
     public void CreateProject(Project project) => Create(project);

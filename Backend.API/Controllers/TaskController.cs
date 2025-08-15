@@ -29,9 +29,9 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
     [HttpGet]
     [ProducesResponseType<IEnumerable<TaskEntity>>(StatusCodes.Status200OK)]
     [Produces("application/json")]
-    public async Task<IActionResult> GetAllTasks()
+    public async Task<IActionResult> GetAllTasks([FromQuery] bool showAll = false)
     {
-        var tasks = await repository.TaskRepository.GetAllTasks();
+        var tasks = await (showAll ? repository.TaskRepository.GetAllTasks() : repository.TaskRepository.GetAllActiveTasks());
 
         return Ok(tasks);
     }
