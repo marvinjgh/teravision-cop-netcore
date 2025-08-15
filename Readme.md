@@ -67,6 +67,9 @@ dotnet add ./Backend.Tests/Backend.Tests.csproj reference ./Backend.API/Backend.
 ### EF and migrations
 
 ``` sh
+# Package to connect with a MS Sql Server
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+
 # install ef global
 dotnet tool install --global dotnet-ef
 
