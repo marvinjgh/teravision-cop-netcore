@@ -9,8 +9,10 @@ public class TaskCreateDTO
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
 
+    public long ProjectId { get; set; }
+
     public override string ToString()
     {
-        return $"Task [Name: {Name ?? "N/A"}, Description: {Description ?? "N/A"}]";
+        return $"Task [Name: {Name ?? "N/A"}, Description: {Description ?? "N/A"}, ProjectId: {ProjectId}]";
     }
 }

@@ -9,6 +9,11 @@ public class TaskEntity : BaseModel
     [Key]
     public long Id { get; set; }
     [StringLength(64, ErrorMessage = "Name cannot be longer than 64 characters")]
+
+    public long ProjectId { get; set; }
+
+    [ForeignKey("ProjectId")]
+    public Project Project { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsDeleted { get; set; } = false;

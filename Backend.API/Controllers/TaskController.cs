@@ -52,16 +52,39 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
             return BadRequest(new ErrorDTO { Message = "Invalid model object" });
         }
 
+        var project = await repository.ProjectRepository.GetProjectById(task.ProjectId);
+        if (project == null)
+        {
+            return BadRequest(new ErrorDTO { Message = "Project does not exist" });
+        }
+
         var newTask = new TaskEntity
         {
             Name = task.Name,
-            Description = task.Description
+            Description = task.Description,
+            ProjectId = task.ProjectId
         };
 
         repository.TaskRepository.CreateTask(newTask);
         await repository.Save();
 
         return CreatedAtAction(nameof(GetTask), new { id = newTask.Id }, newTask);
+    }
+
+    [HttpGet("{id}/tasks")]
+    [ProducesResponseType<IEnumerable<TaskEntity>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetProjectTasks(long id)
+    {
+        var project = await repository.ProjectRepository.GetProjectById(id);
+        if (project == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Project not found" });
+        }
+
+        var projectTasks = await repository.TaskRepository.GetTasksByProjectId(id);
+        return Ok(projectTasks);
     }
 
     // [HttpPut("{id}")]

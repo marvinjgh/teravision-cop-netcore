@@ -25,4 +25,9 @@ public class TaskRepository(RepositoryContext repositoryContext) : RepositoryBas
     public void CreateTask(TaskEntity task) => Create(task);
     public void UpdateTask(TaskEntity task) => Update(task);
     public void DeleteTask(TaskEntity task) => Delete(task);
+
+    public async Task<IEnumerable<TaskEntity>> GetTasksByProjectId(long projectId)
+    {
+        return await FindByCondition(task => task.ProjectId == projectId).ToListAsync();
+    }
 }

@@ -17,4 +17,6 @@ public class Project : BaseModel
     {
         return $"Project [Id: {Id}, Name: {Name}, Description: {Description}, CreateAt: {CreatedAt}, UpdateAt: {UpdatedAt}, IsDeleted: {(IsDeleted ? "true" : "false")}]";
     }
+
+    public virtual ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
 }
