@@ -33,7 +33,6 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development # Para tener Swagger UI
       - DB_SA_PASSWORD=${DB_SA_PASSWORD}
       - ConnectionStrings__DefaultConnection=Server=sqldata,1433;Database=COPDB;User Id=sa;Password=${DB_SA_PASSWORD};TrustServerCertificate=true
-    #- DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
     ports:
       - 8080:8080
       - 8081:8081

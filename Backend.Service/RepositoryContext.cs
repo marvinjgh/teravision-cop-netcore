@@ -50,6 +50,7 @@ public class RepositoryContext : DbContext
             {
                 entry.Property("CreatedAt").CurrentValue = now;
             }
+            // TODO text EntityState.Deleted
 
             entry.Property("UpdatedAt").CurrentValue = now;
 

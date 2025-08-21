@@ -77,14 +77,13 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
     [Produces("application/json")]
     public async Task<IActionResult> GetProjectTasks(long id)
     {
-        var project = await repository.ProjectRepository.GetProjectById(id);
+        var project = await repository.ProjectRepository.GetProjectById(id, include: true);
         if (project == null)
         {
             return NotFound(new ErrorDTO { Message = "Project not found" });
         }
 
-        var projectTasks = await repository.TaskRepository.GetTasksByProjectId(id);
-        return Ok(projectTasks);
+        return Ok(project.Tasks);
     }
 
     // [HttpPut("{id}")]

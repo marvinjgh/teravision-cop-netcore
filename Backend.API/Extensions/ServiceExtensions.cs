@@ -60,7 +60,8 @@ public static class ServiceExtensions
     {
         var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<RepositoryContext>();
-        if (dbContext.Database.HasPendingModelChanges())
+        var pendingMigrations = dbContext.Database.GetPendingMigrations();
+        if (pendingMigrations.Any())
         {
             try
             {

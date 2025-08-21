@@ -13,10 +13,12 @@ public class Project : BaseModel
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsDeleted { get; set; } = false;
+    public virtual ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
     public override string ToString()
     {
-        return $"Project [Id: {Id}, Name: {Name}, Description: {Description}, CreateAt: {CreatedAt}, UpdateAt: {UpdatedAt}, IsDeleted: {(IsDeleted ? "true" : "false")}]";
+        var taskIds = Tasks.Any()
+            ? string.Join(", ", Tasks.Select(t => t.Id))
+            : "Empty";
+        return $"Project [Id: {Id}, Name: {Name}, Description: {Description}, CreateAt: {CreatedAt}, UpdateAt: {UpdatedAt}, IsDeleted: {(IsDeleted ? "true" : "false")}, , TaskIds: [{taskIds}]]";
     }
-
-    public virtual ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
 }

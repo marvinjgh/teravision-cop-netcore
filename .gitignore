@@ -36,5 +36,6 @@ bld/
 *.sl3
 
 # Envs
-.env*
+.env
+.env.*
 !.env.example

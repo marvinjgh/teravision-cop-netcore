@@ -7,21 +7,45 @@ namespace Backend.Service.Repository;
 
 public class ProjectRepository(RepositoryContext repositoryContext) : RepositoryBase<Project>(repositoryContext), IProjectRepository
 {
-    public Task<Project?> GetProjectById(long projectId)
+    public Task<Project?> GetProjectById(long id, bool include = false)
     {
-        return FindByCondition(project => project.Id == projectId).FirstOrDefaultAsync();
+        if (include)
+        {
+            return FindByCondition(project => project.Id == id)
+                .Include(p => p.Tasks)
+                .FirstOrDefaultAsync();
+        }
+        else
+        {
+            return FindByCondition(project => project.Id == id).FirstOrDefaultAsync();
+        }
     }
-
-    public async Task<IEnumerable<Project>> GetAllProjects()
+    public async Task<IEnumerable<Project>> GetAllProjects(bool include = false)
     {
-        return await FindAll().ToListAsync();
+        if (include)
+        {
+            return await FindAll()
+                .Include(p => p.Tasks)
+                .ToListAsync();
+        }
+        else
+        {
+            return await FindAll().ToListAsync();
+        }
     }
-
-    public async Task<IEnumerable<Project>> GetAllActiveProjects()
+    public async Task<IEnumerable<Project>> GetAllActiveProjects(bool include = false)
     {
-        return await FindByCondition(project => !project.IsDeleted).ToListAsync();
+        if (include)
+        {
+            return await FindByCondition(project => !project.IsDeleted)
+                .Include(p => p.Tasks)
+                .ToListAsync();
+        }
+        else
+        {
+            return await FindByCondition(project => !project.IsDeleted).ToListAsync();
+        }
     }
-
     public void CreateProject(Project project) => Create(project);
     public void UpdateProject(Project project) => Update(project);
     public void DeleteProject(Project project) => Delete(project);
