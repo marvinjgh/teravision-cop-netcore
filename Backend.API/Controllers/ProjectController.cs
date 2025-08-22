@@ -15,7 +15,7 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
     [Produces("application/json")]
     public async Task<IActionResult> GetProject(long id)
     {
-        var project = await repository.ProjectRepository.GetProjectById(id);
+        var project = await repository.ProjectRepository.GetProjectById(id, include: true);
 
         if (project == null)
         {
