@@ -109,5 +109,5 @@ docker build -t teravision/cop-backend:latest --build-arg BUILD_CONFIGURATION=Re
 To use the docker compose, is required to has a `.env` file, can user the `.env.example` has a start point.
 
 ``` sh
-docker compose - teravision-cop up -d --build -p
+docker compose -p teravision-cop up -d --build
 ```

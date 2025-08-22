@@ -35,8 +35,8 @@ public static class ServiceExtensions
                     Description = "An API for CoP."
                 };
                 document.Servers = [
+                    new OpenApiServer{ Url= "http://localhost:8080/"},
                     new OpenApiServer{ Url= "https://localhost:8081/"},
-                    new OpenApiServer{ Url= "http://localhost:8081/"}
                 ];
                 return Task.CompletedTask;
             });
@@ -60,7 +60,8 @@ public static class ServiceExtensions
     {
         var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<RepositoryContext>();
-        if (dbContext.Database.HasPendingModelChanges())
+        var pendingMigrations = dbContext.Database.GetPendingMigrations();
+        if (pendingMigrations.Any())
         {
             try
             {

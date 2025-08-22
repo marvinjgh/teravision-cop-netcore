@@ -12,6 +12,12 @@ public class RepositoryContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Project>()
+            .HasMany(p => p.Tasks)
+            .WithOne(t => t.Project)
+            .HasForeignKey(t => t.ProjectId);
     }
 
     public override int SaveChanges()
@@ -43,6 +49,11 @@ public class RepositoryContext : DbContext
             if (entry.State == EntityState.Added && entry.Metadata.FindProperty("CreatedAt") != null)
             {
                 entry.Property("CreatedAt").CurrentValue = now;
+            }
+            if (entry.State == EntityState.Deleted && entry.Metadata.FindProperty("IsDeleted") != null && (entry.Property("IsDeleted").CurrentValue is bool isDeleted && isDeleted == false))
+            {
+                entry.Property("IsDeleted").CurrentValue = true;
+                entry.State = EntityState.Modified;
             }
 
             entry.Property("UpdatedAt").CurrentValue = now;

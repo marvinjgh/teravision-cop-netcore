@@ -12,9 +12,11 @@ public class TaskEntity : BaseModel
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsDeleted { get; set; } = false;
-    // TODO ProjectId long FK User
+    [ForeignKey("ProjectId")]
+    public long? ProjectId { get; set; }
+    public Project? Project { get; set; }
     public override string ToString()
     {
-        return $"TaskEntity [Id: {Id}, Name: {Name}, Description: {Description}, CreateAt: {CreatedAt}, UpdateAt: {UpdatedAt}, IsDeleted: {(IsDeleted ? "true" : "false")}]";
+        return $"TaskEntity [Id: {Id}, Name: {Name}, Description: {Description}, CreateAt: {CreatedAt}, UpdateAt: {UpdatedAt}, IsDeleted: {(IsDeleted ? "true" : "false")}, ProjectId: {ProjectId?.ToString() ?? "N/A"}]";
     }
 }
