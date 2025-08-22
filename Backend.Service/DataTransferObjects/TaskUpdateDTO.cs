@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Backend.Service.DataTransferObjects;
 
-public class TaskCreateDTO
+public class TaskUpdateDTO
 {
     [Required(ErrorMessage = "Name is required")]
     [StringLength(64, ErrorMessage = "Name cannot be longer than 64 characters")]
@@ -12,6 +12,6 @@ public class TaskCreateDTO
     public long ProjectId { get; set; }
     public override string ToString()
     {
-        return $"Task [Name: {Name}, Description: {Description}, ProjectId: {ProjectId}]";
+        return $"TaskUpdateDTO [Name: {Name}, Description: {Description}, ProjectId: {ProjectId}]";
     }
 }

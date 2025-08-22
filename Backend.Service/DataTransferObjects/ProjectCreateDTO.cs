@@ -11,6 +11,6 @@ public class ProjectCreateDTO
 
     public override string ToString()
     {
-        return $"Project [Name: {Name ?? "N/A"}, Description: {Description ?? "N/A"}]";
+        return $"Project [Name: {Name}, Description: {Description}]";
     }
 }

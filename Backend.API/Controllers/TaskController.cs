@@ -71,37 +71,44 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         return CreatedAtAction(nameof(GetTask), new { id = newTask.Id }, newTask);
     }
 
-    // [HttpPut("{id}")]
-    // [ProducesResponseType(StatusCodes.Status200OK)]
-    // [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]
-    // [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
-    // [Produces("application/json")]
-    // public async Task<IActionResult> PutProject(long id, [FromBody] ProjectUpdateDTO updateProject)
-    // {
-    //     if (updateProject is null)
-    //     {
-    //         return BadRequest(new ErrorDTO { Message = "Project object is null" });
-    //     }
-    //     if (!ModelState.IsValid)
-    //     {
-    //         return BadRequest(new ErrorDTO { Message = "Invalid model object" });
-    //     }
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<IActionResult> PutTask(long id, [FromBody] TaskUpdateDTO updateTask)
+    {
+        if (updateTask is null)
+        {
+            return BadRequest(new ErrorDTO { Message = "Task object is null" });
+        }
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new ErrorDTO { Message = "Invalid model object" });
+        }
 
-    //     var project = await repository.ProjectRepository.GetProjectById(id);
+        var task = await repository.TaskRepository.GetTaskById(id);
 
-    //     if (project == null)
-    //     {
-    //         return NotFound(new ErrorDTO { Message = "Project not found" });
-    //     }
+        if (task == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Task not found" });
+        }
 
-    //     project.Name = updateProject.Name;
-    //     project.Description = updateProject.Description;
+        var project = await repository.ProjectRepository.GetProjectById(updateTask.ProjectId);
+        if (project == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Project not found" });
+        }
 
-    //     repository.ProjectRepository.UpdateProject(project);
-    //     await repository.Save();
+        task.Name = updateTask.Name;
+        task.Description = updateTask.Description;
+        task.ProjectId = updateTask.ProjectId;
 
-    //     return Ok(project);
-    // }
+        repository.TaskRepository.UpdateTask(task);
+        await repository.Save();
+
+        return Ok(task);
+    }
 
 
     // [HttpDelete("{id}")]

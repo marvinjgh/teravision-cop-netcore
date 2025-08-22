@@ -358,8 +358,8 @@ public class ProjectControllerTests
         var result2 = await controller.PutProject(1, projectUpdateDTO);
 
         // Assert 2
-        var createdResult = Assert.IsType<NotFoundObjectResult>(result2);
-        error = (ErrorDTO)createdResult.Value;
+        var putResult2 = Assert.IsType<NotFoundObjectResult>(result2);
+        error = (ErrorDTO)putResult2.Value;
         Assert.Equal("Project not found", error.Message);
     }
 
@@ -392,7 +392,7 @@ public class ProjectControllerTests
 
         // Act
         var result = await controller.PutProject(1, projectDTO);
-        Console.WriteLine(result);
+
         // Assert
         var putResult = Assert.IsType<OkObjectResult>(result);
 
