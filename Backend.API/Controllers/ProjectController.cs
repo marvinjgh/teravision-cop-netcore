@@ -102,17 +102,40 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
     [Produces("application/json")]
     public async Task<IActionResult> DeleteProject(long id)
     {
-        var project = await repository.ProjectRepository.GetProjectById(id);
+        var project = await repository.ProjectRepository.GetProjectById(id, include: true);
 
         if (project == null)
         {
             return NotFound(new ErrorDTO { Message = "Project not found" });
         }
 
-        project.IsDeleted = true;
-        repository.ProjectRepository.UpdateProject(project);
+        if (project.Tasks.Count != 0)
+        {
+            foreach (var task in project.Tasks)
+            {
+                task.ProjectId = null;
+                repository.TaskRepository.UpdateTask(task);
+            }
+        }
+
+        repository.ProjectRepository.DeleteProject(project);
         await repository.Save();
 
         return NoContent();
+    }
+
+    [HttpGet("{id}/tasks")]
+    [ProducesResponseType<IEnumerable<TaskEntity>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetProjectTasks(long id)
+    {
+        var project = await repository.ProjectRepository.GetProjectById(id, include: true);
+        if (project == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Project not found" });
+        }
+
+        return Ok(project.Tasks);
     }
 }

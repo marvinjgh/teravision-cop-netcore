@@ -71,21 +71,6 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         return CreatedAtAction(nameof(GetTask), new { id = newTask.Id }, newTask);
     }
 
-    [HttpGet("{id}/tasks")]
-    [ProducesResponseType<IEnumerable<TaskEntity>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
-    [Produces("application/json")]
-    public async Task<IActionResult> GetProjectTasks(long id)
-    {
-        var project = await repository.ProjectRepository.GetProjectById(id, include: true);
-        if (project == null)
-        {
-            return NotFound(new ErrorDTO { Message = "Project not found" });
-        }
-
-        return Ok(project.Tasks);
-    }
-
     // [HttpPut("{id}")]
     // [ProducesResponseType(StatusCodes.Status200OK)]
     // [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]

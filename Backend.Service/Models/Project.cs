@@ -7,7 +7,6 @@ namespace Backend.Service.Models;
 public class Project : BaseModel
 {
     [Key]
-    [Column("ProjectId")]
     public long Id { get; set; }
     [StringLength(64, ErrorMessage = "Name cannot be longer than 64 characters")]
     public string Name { get; set; } = string.Empty;
