@@ -50,7 +50,11 @@ public class RepositoryContext : DbContext
             {
                 entry.Property("CreatedAt").CurrentValue = now;
             }
-            // TODO text EntityState.Deleted
+            if (entry.State == EntityState.Deleted && entry.Metadata.FindProperty("IsDeleted") != null && (entry.Property("IsDeleted").CurrentValue is bool isDeleted && isDeleted == false))
+            {
+                entry.Property("IsDeleted").CurrentValue = true;
+                entry.State = EntityState.Modified;
+            }
 
             entry.Property("UpdatedAt").CurrentValue = now;
 
