@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using Backend.Service.Contracts;
 using Backend.Service.DataTransferObjects;
+using Backend.Service.Extensions;
 using Backend.Service.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,7 +12,7 @@ namespace Backend.API.Controllers;
 public class ProjectController(IRepositoryWrapper repository) : ControllerBase
 {
     [HttpGet("{id}")]
-    [ProducesResponseType<Project>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProjectDTO>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<IActionResult> GetProject(long id)
@@ -22,21 +24,42 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
             return NotFound(new ErrorDTO { Message = "Project not found" });
         }
 
-        return Ok(project);
+        return Ok(project.ToProjectDTO());
     }
 
+    /// <summary>
+    /// Return a paginated list of projects
+    /// </summary>
+    /// <param name="showAll">Include deleted Projects in the result</param>
+    /// <param name="pageNumber">The current page number (1-based)</param>
+    /// <param name="pageSize">The number of items per page</param>
+    /// <returns>IActionResult</returns>
     [HttpGet]
-    [ProducesResponseType<IEnumerable<Project>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<PaginatedResult<ProjectDTO>>(StatusCodes.Status200OK)]
     [Produces("application/json")]
-    public async Task<IActionResult> GetAllProjects([FromQuery] bool showAll = false)
+    public async Task<IActionResult> GetAllProjects(
+        [Description("Include deleted Projects in the result")][FromQuery] bool showAll = false,
+        [Description("The current page number (1-based)")][FromQuery] int pageNumber = 1,
+        [Description("The number of items per page")][FromQuery] int pageSize = 10
+    )
     {
-        var projects = await (showAll ? repository.ProjectRepository.GetAllProjects() : repository.ProjectRepository.GetAllActiveProjects());
+        var projects = await repository.ProjectRepository.GetAllProjects(showAll ? null : project =>
+            !project.IsDeleted
+        );
 
-        return Ok(projects);
+        PaginatedResult<ProjectDTO> paginatedResult = new()
+        {
+            Items = projects.Skip((pageNumber - 1) * pageSize).Take(pageSize).Select(p => p.ToProjectDTO()),
+            TotalCount = projects.Count(),
+            PageSize = pageSize,
+            CurrentPage = pageNumber
+        };
+
+        return Ok(paginatedResult);
     }
 
     [HttpPost]
-    [ProducesResponseType<Project>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProjectDTO>(StatusCodes.Status201Created)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]
     [Produces("application/json")]
     public async Task<IActionResult> PostProject([FromBody] ProjectCreateDTO project)
@@ -51,7 +74,7 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
             return BadRequest(new ErrorDTO { Message = "Invalid model object" });
         }
 
-        var newProject = new Project
+        var newProject = new ProjectEntity
         {
             Name = project.Name,
             Description = project.Description
@@ -60,11 +83,11 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
         repository.ProjectRepository.CreateProject(newProject);
         await repository.Save();
 
-        return CreatedAtAction(nameof(GetProject), new { id = newProject.Id }, newProject);
+        return CreatedAtAction(nameof(GetProject), new { id = newProject.Id }, newProject.ToProjectDTO());
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProjectDTO>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
@@ -92,7 +115,7 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
         repository.ProjectRepository.UpdateProject(project);
         await repository.Save();
 
-        return Ok(project);
+        return Ok(project.ToProjectDTO());
     }
 
 
@@ -125,17 +148,29 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
     }
 
     [HttpGet("{id}/tasks")]
-    [ProducesResponseType<IEnumerable<TaskEntity>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<PaginatedResult<TaskDTO>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public async Task<IActionResult> GetProjectTasks(long id)
+    public async Task<IActionResult> GetProjectTasks(
+        [Description("Project id")] long id,
+        [Description("Page number")][FromQuery] int pageNumber = 1,
+        [Description("Page size")][FromQuery] int pageSize = 10
+    )
     {
-        var project = await repository.ProjectRepository.GetProjectById(id, include: true);
+        var project = await repository.ProjectRepository.GetProjectById(id, true);
         if (project == null)
         {
             return NotFound(new ErrorDTO { Message = "Project not found" });
         }
 
-        return Ok(project.Tasks);
+        PaginatedResult<TaskDTO> paginatedResult = new()
+        {
+            Items = project.Tasks.Skip((pageNumber - 1) * pageSize).Take(pageSize).Select(t => t.ToTaskDto()),
+            TotalCount = project.Tasks.Count(),
+            PageSize = pageSize,
+            CurrentPage = pageNumber
+        };
+
+        return Ok(paginatedResult);
     }
 }

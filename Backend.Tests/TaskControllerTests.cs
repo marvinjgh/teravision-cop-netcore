@@ -61,7 +61,7 @@ public class TaskControllerTests
 
         //Assert
         var okObjectResult = Assert.IsType<OkObjectResult>(result);
-        var taskResult = (TaskEntity)okObjectResult.Value;
+        var taskResult = (TaskDTO)okObjectResult.Value;
 
         Assert.Equal(taskEntity.Id, taskResult.Id);
         Assert.Equal(taskEntity.Name, taskResult.Name);
@@ -79,57 +79,92 @@ public class TaskControllerTests
     [Fact]
     public async Task GetAllTasks_ReturnsOk()
     {
+        #region ShowAll_False_Page_1_Size_10
         // Arrange
-        var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.TaskRepository.GetAllTasks(false))
+        var mockRepo1 = new Mock<IRepositoryWrapper>();
+        mockRepo1.Setup(repo => repo.TaskRepository.GetAllTasks(t => !t.IsDeleted))
             .ReturnsAsync(new List<TaskEntity>
             {
-                 new() { Id = 1, Name = "Task 1", Description = "Description 1", IsDeleted = false },
-                 new() { Id = 2, Name = "Task 2", Description = "Description 2", IsDeleted = true }
+                new() { Id = 1, Name = "Task 1", IsDeleted = true }
             });
 
-        var controller = new TaskController(mockRepo.Object);
-
+        var controller1 = new TaskController(mockRepo1.Object);
         //Act
-        var result = await controller.GetAllTasks(showAll: true);
+        var result1 = await controller1.GetAllTasks(showAll: false, pageNumber: 1, pageSize: 10);
 
         //Assert
-        var okObjectResult = Assert.IsType<OkObjectResult>(result);
-        var tasks = Assert.IsAssignableFrom<List<TaskEntity>>(okObjectResult.Value);
-        Assert.Equal(2, tasks.Count);
+        var okObjectResult1 = Assert.IsType<OkObjectResult>(result1);
+        var paginatedResult1 = Assert.IsAssignableFrom<PaginatedResult<TaskDTO>>(okObjectResult1.Value);
 
-        mockRepo.Verify(
-           repo => repo.TaskRepository.GetAllTasks(false),
-           Times.Once
+        Assert.Equal(1, paginatedResult1.TotalCount);
+        Assert.Equal(10, paginatedResult1.PageSize);
+        Assert.Equal(1, paginatedResult1.CurrentPage);
+        Assert.Equal(1, paginatedResult1.TotalPages);
+        Assert.Single(paginatedResult1.Items);
+
+        mockRepo1.Verify(
+            repo => repo.TaskRepository.GetAllTasks(p => !p.IsDeleted),
+            Times.Once
         );
-    }
-
-    [Fact]
-    public async Task GetAllActiveTasks_ReturnsOk()
-    {
+        #endregion
+        #region ShowAll_True_Page_1_Size_10
         // Arrange
-        var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.TaskRepository.GetAllTasks(false))
+        var mockRepo2 = new Mock<IRepositoryWrapper>();
+        mockRepo2.Setup(repo => repo.TaskRepository.GetAllTasks(null))
             .ReturnsAsync(new List<TaskEntity>
             {
-                 new() { Id = 1, Name = "Task 1", Description = "Description 1", IsDeleted = false },
-                 new() { Id = 2, Name = "Task 2", Description = "Description 2", IsDeleted = true }
-            }.Where(task => !task.IsDeleted).ToList());
+                new() { Id = 1, Name = "Task 1", IsDeleted = true },
+                new() { Id = 2, Name = "Task 2", IsDeleted = false }
+            });
 
-        var controller = new TaskController(mockRepo.Object);
-
+        var controller2 = new TaskController(mockRepo2.Object);
         //Act
-        var result = await controller.GetAllTasks(showAll: true);
+        var result2 = await controller2.GetAllTasks(showAll: true, pageNumber: 1, pageSize: 10);
 
         //Assert
-        var okObjectResult = Assert.IsType<OkObjectResult>(result);
-        var tasks = Assert.IsAssignableFrom<List<TaskEntity>>(okObjectResult.Value);
-        Assert.Single(tasks);
+        var okObjectResult2 = Assert.IsType<OkObjectResult>(result2);
+        var paginatedResult2 = Assert.IsAssignableFrom<PaginatedResult<TaskDTO>>(okObjectResult2.Value);
 
-        mockRepo.Verify(
-           repo => repo.TaskRepository.GetAllTasks(false),
-           Times.Once
+        Assert.Equal(2, paginatedResult2.TotalCount);
+        Assert.Equal(10, paginatedResult2.PageSize);
+        Assert.Equal(1, paginatedResult2.CurrentPage);
+        Assert.Equal(1, paginatedResult2.TotalPages);
+        Assert.Equal(2, paginatedResult2.Items.Count());
+
+        mockRepo2.Verify(
+            repo => repo.TaskRepository.GetAllTasks(null),
+            Times.Once
         );
+        #endregion
+        #region ShowAll_True_Page_1_Size_1
+        // Arrange
+        var mockRepo3 = new Mock<IRepositoryWrapper>();
+        mockRepo3.Setup(repo => repo.TaskRepository.GetAllTasks(null))
+            .ReturnsAsync(new List<TaskEntity>
+            {
+                new() { Id = 1, Name = "Task 1", IsDeleted = true },
+                new() { Id = 2, Name = "Task 2", IsDeleted = false }
+            });
+
+        var controller3 = new TaskController(mockRepo3.Object);
+        //Act
+        var result3 = await controller3.GetAllTasks(showAll: true, pageNumber: 1, pageSize: 1);
+
+        //Assert
+        var okObjectResult3 = Assert.IsType<OkObjectResult>(result3);
+        var paginatedResult3 = Assert.IsAssignableFrom<PaginatedResult<TaskDTO>>(okObjectResult3.Value);
+
+        Assert.Equal(2, paginatedResult3.TotalCount);
+        Assert.Equal(1, paginatedResult3.PageSize);
+        Assert.Equal(1, paginatedResult3.CurrentPage);
+        Assert.Equal(2, paginatedResult3.TotalPages);
+        Assert.Single(paginatedResult3.Items);
+
+        mockRepo3.Verify(
+            repo => repo.TaskRepository.GetAllTasks(null),
+            Times.Once
+        );
+        #endregion
     }
 
     [Fact]
@@ -170,7 +205,7 @@ public class TaskControllerTests
         var mockProjectRepo = new Mock<IProjectRepository>();
 
         mockProjectRepo.Setup(r => r.GetProjectById(testId, false))
-        .ReturnsAsync(new Project { Id = testId, Name = "Project 1" });
+        .ReturnsAsync(new ProjectEntity { Id = testId, Name = "Project 1" });
 
         mockTaskRepo.Setup(r => r.CreateTask(It.IsAny<TaskEntity>()))
             .Callback<TaskEntity>(p =>
@@ -196,7 +231,7 @@ public class TaskControllerTests
         Assert.NotNull(createdResult.RouteValues);
         Assert.Equal(testId, createdResult.RouteValues["id"]);
 
-        var resultTask = (TaskEntity)createdResult.Value;
+        var resultTask = (TaskDTO)createdResult.Value;
 
         Assert.Equal(testId, resultTask.Id);
         Assert.Equal(taskCreateDTO.Name, resultTask.Name);
@@ -237,7 +272,7 @@ public class TaskControllerTests
         var mockTaskRepo = new Mock<ITaskRepository>();
 
         mockProjectRepo.Setup(r => r.GetProjectById(invalidProjectId, false))
-            .ReturnsAsync((Project?)null);
+            .ReturnsAsync((ProjectEntity?)null);
 
         mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
         mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
@@ -360,7 +395,7 @@ public class TaskControllerTests
             ProjectId = 1
         };
         var now = DateTimeOffset.UtcNow;
-        var project = new Project { Id = testId, Name = "Project 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
+        var project = new ProjectEntity { Id = testId, Name = "Project 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
         var task = new TaskEntity { Id = testId, Name = "Task 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
         var mockRepository = new Mock<IRepositoryWrapper>();
         var mockProjectRepo = new Mock<IProjectRepository>();
@@ -387,7 +422,7 @@ public class TaskControllerTests
         // Assert
         var putResult = Assert.IsType<OkObjectResult>(result);
 
-        var resultTask = (TaskEntity)putResult.Value;
+        var resultTask = (TaskDTO)putResult.Value;
 
         Assert.Equal(resultTask.Id, task.Id);
         Assert.Equal(resultTask.Name, taskUpdateDTO.Name);

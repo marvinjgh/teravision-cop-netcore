@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using Backend.Service.Contracts;
 using Backend.Service.DataTransferObjects;
+using Backend.Service.Extensions;
 using Backend.Service.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +13,7 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
 {
 
     [HttpGet("{id}")]
-    [ProducesResponseType<TaskEntity>(StatusCodes.Status200OK)]
+    [ProducesResponseType<TaskDTO>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<IActionResult> GetTask(long id)
@@ -23,17 +25,38 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
             return NotFound(new ErrorDTO { Message = "Task not found" });
         }
 
-        return Ok(task);
+        return Ok(task.ToTaskDto());
     }
 
+    /// <summary>
+    /// Return a paginated list of tasks
+    /// </summary>
+    /// <param name="showAll">Include deleted Tasks in the result</param>
+    /// <param name="pageNumber">The current page number (1-based)</param>
+    /// <param name="pageSize">The number of items per page</param>
+    /// <returns>IActionResult</returns>
     [HttpGet]
-    [ProducesResponseType<IEnumerable<TaskEntity>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<PaginatedResult<TaskDTO>>(StatusCodes.Status200OK)]
     [Produces("application/json")]
-    public async Task<IActionResult> GetAllTasks([FromQuery] bool showAll = false)
+    public async Task<IActionResult> GetAllTasks(
+        [Description("Include deleted Tasks in the result")][FromQuery] bool showAll = false,
+        [Description("The current page number (1-based)")][FromQuery] int pageNumber = 1,
+        [Description("The number of items per page")][FromQuery] int pageSize = 10
+    )
     {
-        var tasks = await (showAll ? repository.TaskRepository.GetAllTasks() : repository.TaskRepository.GetAllActiveTasks());
+        var tasks = await repository.TaskRepository.GetAllTasks(showAll ? null : task =>
+            !task.IsDeleted
+        );
 
-        return Ok(tasks);
+        PaginatedResult<TaskDTO> paginatedResult = new()
+        {
+            Items = tasks.Skip((pageNumber - 1) * pageSize).Take(pageSize).Select(t => t.ToTaskDto()),
+            TotalCount = tasks.Count(),
+            PageSize = pageSize,
+            CurrentPage = pageNumber
+        };
+
+        return Ok(paginatedResult);
     }
 
     [HttpPost]
@@ -68,7 +91,7 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         repository.TaskRepository.CreateTask(newTask);
         await repository.Save();
 
-        return CreatedAtAction(nameof(GetTask), new { id = newTask.Id }, newTask);
+        return CreatedAtAction(nameof(GetTask), new { id = newTask.Id }, newTask.ToTaskDto());
     }
 
     [HttpPut("{id}")]
@@ -107,7 +130,7 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         repository.TaskRepository.UpdateTask(task);
         await repository.Save();
 
-        return Ok(task);
+        return Ok(task.ToTaskDto());
     }
 
 

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Backend.Service.Contracts;
 using Backend.Service.Models;
 using Backend.Service.Respository;
@@ -20,29 +21,13 @@ public class TaskRepository(RepositoryContext repositoryContext) : RepositoryBas
             return FindByCondition(task => task.Id == id).FirstOrDefaultAsync();
         }
     }
-    public async Task<IEnumerable<TaskEntity>> GetAllTasks(bool include = false)
+    public async Task<IEnumerable<TaskEntity>> GetAllTasks(Expression<Func<TaskEntity, bool>>? expression)
     {
-        if (include)
+        if (expression is not null)
         {
-            return await FindAll().Include(t => t.Project).ToListAsync();
+            return await FindByCondition(expression).ToListAsync();
         }
-        else
-        {
-            return await FindAll().ToListAsync();
-        }
-    }
-    public async Task<IEnumerable<TaskEntity>> GetAllActiveTasks(bool include = false)
-    {
-        if (include)
-        {
-            return await FindByCondition(task => !task.IsDeleted)
-                .Include(t => t.Project)
-                .ToListAsync();
-        }
-        else
-        {
-            return await FindByCondition(task => !task.IsDeleted).ToListAsync();
-        }
+        return await FindAll().ToListAsync();
     }
     public void CreateTask(TaskEntity task) => Create(task);
     public void UpdateTask(TaskEntity task) => Update(task);
