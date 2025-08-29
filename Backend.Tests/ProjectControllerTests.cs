@@ -16,7 +16,7 @@ public class ProjectControllerTests
         long testId = 1;
 
         var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId, false))
+        mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId, true))
             .ReturnsAsync((Project?)null);
 
         var controller = new ProjectController(mockRepo.Object);
@@ -30,7 +30,7 @@ public class ProjectControllerTests
         Assert.Equal("Project not found", error.Message);
 
         mockRepo.Verify(
-            repo => repo.ProjectRepository.GetProjectById(testId, false),
+            repo => repo.ProjectRepository.GetProjectById(testId, true),
             Times.Once
         );
     }
@@ -49,7 +49,7 @@ public class ProjectControllerTests
             CreatedAt = now,
             UpdatedAt = now
         };
-        mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId, false))
+        mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId, true))
             .ReturnsAsync(projectEntity);
 
         var controller = new ProjectController(mockRepo.Object);
@@ -68,7 +68,7 @@ public class ProjectControllerTests
         Assert.Equal(projectEntity.UpdatedAt, projectResult.UpdatedAt);
 
         mockRepo.Verify(
-            repo => repo.ProjectRepository.GetProjectById(testId, false),
+            repo => repo.ProjectRepository.GetProjectById(testId, true),
             Times.Once
         );
     }
@@ -76,57 +76,92 @@ public class ProjectControllerTests
     [Fact]
     public async Task GetAllProjects_ReturnsOk()
     {
+        #region ShowAll_False_Page_1_Size_10
         // Arrange
-        var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.ProjectRepository.GetAllProjects(false))
+        var mockRepo1 = new Mock<IRepositoryWrapper>();
+        mockRepo1.Setup(repo => repo.ProjectRepository.GetAllProjects(p => !p.IsDeleted))
             .ReturnsAsync(new List<Project>
             {
-                new() { Id = 1, Name = "Project 1", IsDeleted = false},
-                new() { Id = 2, Name = "Project 2", IsDeleted = true }
+                new() { Id = 1, Name = "Project 1", IsDeleted = true }
             });
 
-        var controller = new ProjectController(mockRepo.Object);
-
+        var controller1 = new ProjectController(mockRepo1.Object);
         //Act
-        var result = await controller.GetAllProjects(showAll: true);
+        var result1 = await controller1.GetAllProjects(showAll: false, pageNumber: 1, pageSize: 10);
 
         //Assert
-        var okObjectResult = Assert.IsType<OkObjectResult>(result);
-        var projects = Assert.IsAssignableFrom<List<Project>>(okObjectResult.Value);
-        Assert.Equal(2, projects.Count);
+        var okObjectResult1 = Assert.IsType<OkObjectResult>(result1);
+        var paginatedResult1 = Assert.IsAssignableFrom<PaginatedResult<ProjectDTO>>(okObjectResult1.Value);
 
-        mockRepo.Verify(
-            repo => repo.ProjectRepository.GetAllProjects(false),
+        Assert.Equal(1, paginatedResult1.TotalCount);
+        Assert.Equal(10, paginatedResult1.PageSize);
+        Assert.Equal(1, paginatedResult1.CurrentPage);
+        Assert.Equal(1, paginatedResult1.TotalPages);
+        Assert.Single(paginatedResult1.Items);
+
+        mockRepo1.Verify(
+            repo => repo.ProjectRepository.GetAllProjects(p => !p.IsDeleted),
             Times.Once
         );
-    }
-
-    [Fact]
-    public async Task GetAllActiveProjects_ReturnsOk()
-    {
+        #endregion
+        #region ShowAll_True_Page_1_Size_10
         // Arrange
-        var mockRepo = new Mock<IRepositoryWrapper>();
-        mockRepo.Setup(repo => repo.ProjectRepository.GetAllActiveProjects(false))
+        var mockRepo2 = new Mock<IRepositoryWrapper>();
+        mockRepo2.Setup(repo => repo.ProjectRepository.GetAllProjects(null))
             .ReturnsAsync(new List<Project>
             {
-                new() { Id = 1, Name = "Project 1", IsDeleted = false},
-                new() { Id = 2, Name = "Project 2", IsDeleted = true}
-            }.Where(project => !project.IsDeleted).ToList());
+                new() { Id = 1, Name = "Project 1", IsDeleted = true },
+                new() { Id = 2, Name = "Project 2", IsDeleted = false }
+            });
 
-        var controller = new ProjectController(mockRepo.Object);
-
+        var controller2 = new ProjectController(mockRepo2.Object);
         //Act
-        var result = await controller.GetAllProjects();
+        var result2 = await controller2.GetAllProjects(showAll: true, pageNumber: 1, pageSize: 10);
 
         //Assert
-        var okObjectResult = Assert.IsType<OkObjectResult>(result);
-        var projects = Assert.IsAssignableFrom<List<Project>>(okObjectResult.Value);
-        Assert.Single(projects);
+        var okObjectResult2 = Assert.IsType<OkObjectResult>(result2);
+        var paginatedResult2 = Assert.IsAssignableFrom<PaginatedResult<ProjectDTO>>(okObjectResult2.Value);
 
-        mockRepo.Verify(
-            repo => repo.ProjectRepository.GetAllActiveProjects(false),
+        Assert.Equal(2, paginatedResult2.TotalCount);
+        Assert.Equal(10, paginatedResult2.PageSize);
+        Assert.Equal(1, paginatedResult2.CurrentPage);
+        Assert.Equal(1, paginatedResult2.TotalPages);
+        Assert.Equal(2, paginatedResult2.Items.Count());
+
+        mockRepo2.Verify(
+            repo => repo.ProjectRepository.GetAllProjects(null),
             Times.Once
         );
+        #endregion
+        #region ShowAll_True_Page_1_Size_1
+        // Arrange
+        var mockRepo3 = new Mock<IRepositoryWrapper>();
+        mockRepo3.Setup(repo => repo.ProjectRepository.GetAllProjects(null))
+            .ReturnsAsync(new List<Project>
+            {
+                new() { Id = 1, Name = "Project 1", IsDeleted = true },
+                new() { Id = 2, Name = "Project 2", IsDeleted = false }
+            });
+
+        var controller3 = new ProjectController(mockRepo3.Object);
+        //Act
+        var result3 = await controller3.GetAllProjects(showAll: true, pageNumber: 1, pageSize: 1);
+
+        //Assert
+        var okObjectResult3 = Assert.IsType<OkObjectResult>(result3);
+        var paginatedResult3 = Assert.IsAssignableFrom<PaginatedResult<ProjectDTO>>(okObjectResult3.Value);
+
+        Assert.Equal(2, paginatedResult3.TotalCount);
+        Assert.Equal(1, paginatedResult3.PageSize);
+        Assert.Equal(1, paginatedResult3.CurrentPage);
+        Assert.Equal(2, paginatedResult3.TotalPages);
+        Assert.Single(paginatedResult3.Items);
+
+        mockRepo3.Verify(
+            repo => repo.ProjectRepository.GetAllProjects(null),
+            Times.Once
+        );
+        #endregion
     }
 
     [Fact]
@@ -413,72 +448,101 @@ public class ProjectControllerTests
     }
 
     [Fact]
-    public async Task GetTasksByProjectId_ReturnsOk_WithTasks()
+    public async Task GetTasksByProjectId_ReturnsNotFound()
     {
         // Arrange
-        long testProjectId = 1;
-        var project = new Project
-        {
-            Id = testProjectId,
-            Name = "Project 1",
-            Tasks = new List<TaskEntity>
-        {
-            new TaskEntity { Id = 1, Name = "Task 1", ProjectId = testProjectId, IsDeleted = false },
-            new TaskEntity { Id = 2, Name = "Task 2", ProjectId = testProjectId, IsDeleted = false }
-        }
-        };
+        long testId = 1;
 
-        var mockRepository = new Mock<IRepositoryWrapper>();
-        var mockProjectRepo = new Mock<IProjectRepository>();
-        var mockTaskRepo = new Mock<ITaskRepository>();
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId, true))
+            .ReturnsAsync((Project?)null);
 
-        mockProjectRepo.Setup(r => r.GetProjectById(testProjectId, true)).ReturnsAsync(project);
+        var controller = new ProjectController(mockRepo.Object);
 
+        //Act
+        var result = await controller.GetProjectTasks(testId);
 
-        mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
-        mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
+        //Assert
+        var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(result);
+        ErrorDTO error = (ErrorDTO)notFoundObjectResult.Value;
+        Assert.Equal("Project not found", error.Message);
 
-        var controller = new ProjectController(mockRepository.Object);
-
-        // Act
-        var result = await controller.GetProjectTasks(testProjectId);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnedTasks = Assert.IsAssignableFrom<IEnumerable<TaskEntity>>(okResult.Value);
-        Assert.Equal(2, returnedTasks.Count());
-        Assert.All(returnedTasks, t => Assert.Equal(testProjectId, t.ProjectId));
-
-        mockProjectRepo.Verify(r => r.GetProjectById(testProjectId, true), Times.Once);
+        mockRepo.Verify(
+            repo => repo.ProjectRepository.GetProjectById(testId, true),
+            Times.Once
+        );
     }
 
     [Fact]
-    public async Task GetTasksByProjectId_ReturnsOk_EmptyList_WhenNoTasks()
+    public async Task GetTasksByProjectId_ReturnsOk()
     {
-        // Arrange
         long testProjectId = 1;
-        var project = new Project { Id = testProjectId, Name = "Project 1", Tasks = [] };
 
-        var mockRepository = new Mock<IRepositoryWrapper>();
-        var mockProjectRepo = new Mock<IProjectRepository>();
-        var mockTaskRepo = new Mock<ITaskRepository>();
+        #region Project_With_Tasks
+        // Arrange
+        var project1 = new Project
+        {
+            Id = testProjectId,
+            Name = "Project 1",
+            Tasks =
+            [
+                new() { Id = 1, Name = "Task 1", ProjectId = testProjectId, IsDeleted = false },
+                new() { Id = 2, Name = "Task 2", ProjectId = testProjectId, IsDeleted = false }
+            ]
+        };
 
-        mockProjectRepo.Setup(r => r.GetProjectById(testProjectId, true)).ReturnsAsync(project);
+        var mockRepository1 = new Mock<IRepositoryWrapper>();
+        var mockProjectRepo1 = new Mock<IProjectRepository>();
 
-        mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
-        mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
+        mockProjectRepo1.Setup(r => r.GetProjectById(testProjectId, true)).ReturnsAsync(project1);
+        mockRepository1.Setup(r => r.ProjectRepository).Returns(mockProjectRepo1.Object);
 
-        var controller = new ProjectController(mockRepository.Object);
+        var controller1 = new ProjectController(mockRepository1.Object);
 
         // Act
-        var result = await controller.GetProjectTasks(testProjectId);
+        var result1 = await controller1.GetProjectTasks(testProjectId);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnedTasks = Assert.IsAssignableFrom<IEnumerable<TaskEntity>>(okResult.Value);
-        Assert.Empty(returnedTasks);
+        var okResult1 = Assert.IsType<OkObjectResult>(result1);
+        var returnedTasks1 = Assert.IsAssignableFrom<PaginatedResult<TaskDTO>>(okResult1.Value);
 
-        mockProjectRepo.Verify(r => r.GetProjectById(testProjectId, true), Times.Once);
+        Assert.Equal(2, returnedTasks1.TotalCount);
+        Assert.Equal(10, returnedTasks1.PageSize);
+        Assert.Equal(1, returnedTasks1.CurrentPage);
+        Assert.Equal(1, returnedTasks1.TotalPages);
+        Assert.Equal(2, returnedTasks1.Items.Count());
+        Assert.All(returnedTasks1.Items, t => Assert.Equal(testProjectId, t.ProjectId));
+
+        mockProjectRepo1.Verify(r => r.GetProjectById(testProjectId, true), Times.Once);
+        #endregion
+
+        #region Project_Without_Tasks
+        // Arrange
+        var project2 = new Project { Id = testProjectId, Name = "Project 1", Tasks = [] };
+
+        var mockRepository2 = new Mock<IRepositoryWrapper>();
+        var mockProjectRepo2 = new Mock<IProjectRepository>();
+
+        mockProjectRepo2.Setup(r => r.GetProjectById(testProjectId, true)).ReturnsAsync(project2);
+        mockRepository2.Setup(r => r.ProjectRepository).Returns(mockProjectRepo2.Object);
+
+        var controller = new ProjectController(mockRepository2.Object);
+
+        // Act
+        var result2 = await controller.GetProjectTasks(testProjectId);
+
+        // Assert
+        var okResult2 = Assert.IsType<OkObjectResult>(result2);
+        var returnedTasks2 = Assert.IsAssignableFrom<PaginatedResult<TaskDTO>>(okResult2.Value);
+
+        Assert.Equal(0, returnedTasks2.TotalCount);
+        Assert.Equal(10, returnedTasks2.PageSize);
+        Assert.Equal(1, returnedTasks2.CurrentPage);
+        Assert.Equal(0, returnedTasks2.TotalPages);
+        Assert.Empty(returnedTasks2.Items);
+
+        mockProjectRepo1.Verify(r => r.GetProjectById(testProjectId, true), Times.Once);
+        #endregion
     }
 }
 
