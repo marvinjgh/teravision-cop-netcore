@@ -61,7 +61,7 @@ public class TaskControllerTests
 
         //Assert
         var okObjectResult = Assert.IsType<OkObjectResult>(result);
-        var taskResult = (TaskEntity)okObjectResult.Value;
+        var taskResult = (TaskDTO)okObjectResult.Value;
 
         Assert.Equal(taskEntity.Id, taskResult.Id);
         Assert.Equal(taskEntity.Name, taskResult.Name);
@@ -231,7 +231,7 @@ public class TaskControllerTests
         Assert.NotNull(createdResult.RouteValues);
         Assert.Equal(testId, createdResult.RouteValues["id"]);
 
-        var resultTask = (TaskEntity)createdResult.Value;
+        var resultTask = (TaskDTO)createdResult.Value;
 
         Assert.Equal(testId, resultTask.Id);
         Assert.Equal(taskCreateDTO.Name, resultTask.Name);
@@ -422,7 +422,7 @@ public class TaskControllerTests
         // Assert
         var putResult = Assert.IsType<OkObjectResult>(result);
 
-        var resultTask = (TaskEntity)putResult.Value;
+        var resultTask = (TaskDTO)putResult.Value;
 
         Assert.Equal(resultTask.Id, task.Id);
         Assert.Equal(resultTask.Name, taskUpdateDTO.Name);

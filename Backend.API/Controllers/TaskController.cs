@@ -13,7 +13,7 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
 {
 
     [HttpGet("{id}")]
-    [ProducesResponseType<TaskEntity>(StatusCodes.Status200OK)]
+    [ProducesResponseType<TaskDTO>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<IActionResult> GetTask(long id)
@@ -25,7 +25,7 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
             return NotFound(new ErrorDTO { Message = "Task not found" });
         }
 
-        return Ok(task);
+        return Ok(task.ToTaskDto());
     }
 
     /// <summary>
@@ -91,7 +91,7 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         repository.TaskRepository.CreateTask(newTask);
         await repository.Save();
 
-        return CreatedAtAction(nameof(GetTask), new { id = newTask.Id }, newTask);
+        return CreatedAtAction(nameof(GetTask), new { id = newTask.Id }, newTask.ToTaskDto());
     }
 
     [HttpPut("{id}")]
@@ -130,7 +130,7 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         repository.TaskRepository.UpdateTask(task);
         await repository.Save();
 
-        return Ok(task);
+        return Ok(task.ToTaskDto());
     }
 
 

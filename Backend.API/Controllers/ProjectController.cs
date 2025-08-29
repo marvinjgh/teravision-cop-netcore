@@ -12,7 +12,7 @@ namespace Backend.API.Controllers;
 public class ProjectController(IRepositoryWrapper repository) : ControllerBase
 {
     [HttpGet("{id}")]
-    [ProducesResponseType<Project>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProjectDTO>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     public async Task<IActionResult> GetProject(long id)
@@ -24,7 +24,7 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
             return NotFound(new ErrorDTO { Message = "Project not found" });
         }
 
-        return Ok(project);
+        return Ok(project.ToProjectDTO());
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType<Project>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProjectDTO>(StatusCodes.Status201Created)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]
     [Produces("application/json")]
     public async Task<IActionResult> PostProject([FromBody] ProjectCreateDTO project)
@@ -83,11 +83,11 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
         repository.ProjectRepository.CreateProject(newProject);
         await repository.Save();
 
-        return CreatedAtAction(nameof(GetProject), new { id = newProject.Id }, newProject);
+        return CreatedAtAction(nameof(GetProject), new { id = newProject.Id }, newProject.ToProjectDTO());
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProjectDTO>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
@@ -115,7 +115,7 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
         repository.ProjectRepository.UpdateProject(project);
         await repository.Save();
 
-        return Ok(project);
+        return Ok(project.ToProjectDTO());
     }
 
 

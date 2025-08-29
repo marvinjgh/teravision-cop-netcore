@@ -60,7 +60,7 @@ public class ProjectControllerTests
         //Assert
 
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var projectResult = (Project)okResult.Value;
+        var projectResult = (ProjectDTO)okResult.Value;
 
         Assert.Equal(projectEntity.Id, projectResult.Id);
         Assert.Equal(projectEntity.Name, projectResult.Name);
@@ -229,7 +229,7 @@ public class ProjectControllerTests
         Assert.NotNull(createdResult.RouteValues);
         Assert.Equal(testId, createdResult.RouteValues["id"]);
 
-        var resultProject = (Project)createdResult.Value;
+        var resultProject = (ProjectDTO)createdResult.Value;
 
         Assert.Equal(testId, resultProject.Id);
         Assert.Equal(projectCreateDTO.Name, resultProject.Name);
@@ -431,7 +431,7 @@ public class ProjectControllerTests
         // Assert
         var putResult = Assert.IsType<OkObjectResult>(result);
 
-        var resultProject = (Project)putResult.Value;
+        var resultProject = (ProjectDTO)putResult.Value;
 
         Assert.Equal(project.Id, resultProject.Id);
         Assert.Equal(projectDTO.Name, resultProject.Name);
