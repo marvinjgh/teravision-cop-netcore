@@ -14,7 +14,7 @@ public class RepositoryContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Project>()
+        modelBuilder.Entity<ProjectEntity>()
             .HasMany(p => p.Tasks)
             .WithOne(t => t.Project)
             .HasForeignKey(t => t.ProjectId);
@@ -62,7 +62,7 @@ public class RepositoryContext : DbContext
         return base.SaveChangesAsync(cancellationToken);
     }
 
-    public DbSet<Project> Projects { get; set; }
+    public DbSet<ProjectEntity> Projects { get; set; }
     public DbSet<TaskEntity> Tasks { get; set; }
 }
 

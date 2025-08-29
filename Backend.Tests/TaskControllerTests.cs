@@ -205,7 +205,7 @@ public class TaskControllerTests
         var mockProjectRepo = new Mock<IProjectRepository>();
 
         mockProjectRepo.Setup(r => r.GetProjectById(testId, false))
-        .ReturnsAsync(new Project { Id = testId, Name = "Project 1" });
+        .ReturnsAsync(new ProjectEntity { Id = testId, Name = "Project 1" });
 
         mockTaskRepo.Setup(r => r.CreateTask(It.IsAny<TaskEntity>()))
             .Callback<TaskEntity>(p =>
@@ -272,7 +272,7 @@ public class TaskControllerTests
         var mockTaskRepo = new Mock<ITaskRepository>();
 
         mockProjectRepo.Setup(r => r.GetProjectById(invalidProjectId, false))
-            .ReturnsAsync((Project?)null);
+            .ReturnsAsync((ProjectEntity?)null);
 
         mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
         mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
@@ -395,7 +395,7 @@ public class TaskControllerTests
             ProjectId = 1
         };
         var now = DateTimeOffset.UtcNow;
-        var project = new Project { Id = testId, Name = "Project 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
+        var project = new ProjectEntity { Id = testId, Name = "Project 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
         var task = new TaskEntity { Id = testId, Name = "Task 1", IsDeleted = false, CreatedAt = now, UpdatedAt = now };
         var mockRepository = new Mock<IRepositoryWrapper>();
         var mockProjectRepo = new Mock<IProjectRepository>();

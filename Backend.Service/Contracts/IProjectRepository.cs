@@ -5,9 +5,9 @@ namespace Backend.Service.Contracts;
 
 public interface IProjectRepository
 {
-    Task<IEnumerable<Project>> GetAllProjects(Expression<Func<Project, bool>>? expression);
-    Task<Project?> GetProjectById(long projectId, bool include = false);
-    void CreateProject(Project project);
-    void UpdateProject(Project project);
-    void DeleteProject(Project project);
+    Task<IEnumerable<ProjectEntity>> GetAllProjects(Expression<Func<ProjectEntity, bool>>? expression);
+    Task<ProjectEntity?> GetProjectById(long projectId, bool include = false);
+    void CreateProject(ProjectEntity project);
+    void UpdateProject(ProjectEntity project);
+    void DeleteProject(ProjectEntity project);
 }

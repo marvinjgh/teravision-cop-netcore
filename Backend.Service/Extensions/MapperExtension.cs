@@ -5,7 +5,7 @@ namespace Backend.Service.Extensions;
 
 public static class MapperExtension
 {
-    public static ProjectDTO ToProjectDTO(this Project entity) =>
+    public static ProjectDTO ToProjectDTO(this ProjectEntity entity) =>
         new()
         {
             Id = entity.Id,

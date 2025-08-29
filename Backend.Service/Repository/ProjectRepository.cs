@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Service.Repository;
 
-public class ProjectRepository(RepositoryContext repositoryContext) : RepositoryBase<Project>(repositoryContext), IProjectRepository
+public class ProjectRepository(RepositoryContext repositoryContext) : RepositoryBase<ProjectEntity>(repositoryContext), IProjectRepository
 {
-    public Task<Project?> GetProjectById(long id, bool include = false)
+    public Task<ProjectEntity?> GetProjectById(long id, bool include = false)
     {
         if (include)
         {
@@ -21,7 +21,7 @@ public class ProjectRepository(RepositoryContext repositoryContext) : Repository
             return FindByCondition(project => project.Id == id).FirstOrDefaultAsync();
         }
     }
-    public async Task<IEnumerable<Project>> GetAllProjects(Expression<Func<Project, bool>>? expression)
+    public async Task<IEnumerable<ProjectEntity>> GetAllProjects(Expression<Func<ProjectEntity, bool>>? expression)
     {
         if (expression is not null)
         {
@@ -29,7 +29,7 @@ public class ProjectRepository(RepositoryContext repositoryContext) : Repository
         }
         return await FindAll().ToListAsync();
     }
-    public void CreateProject(Project project) => Create(project);
-    public void UpdateProject(Project project) => Update(project);
-    public void DeleteProject(Project project) => Delete(project);
+    public void CreateProject(ProjectEntity project) => Create(project);
+    public void UpdateProject(ProjectEntity project) => Update(project);
+    public void DeleteProject(ProjectEntity project) => Delete(project);
 }

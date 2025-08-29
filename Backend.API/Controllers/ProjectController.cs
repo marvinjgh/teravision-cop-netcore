@@ -74,7 +74,7 @@ public class ProjectController(IRepositoryWrapper repository) : ControllerBase
             return BadRequest(new ErrorDTO { Message = "Invalid model object" });
         }
 
-        var newProject = new Project
+        var newProject = new ProjectEntity
         {
             Name = project.Name,
             Description = project.Description
