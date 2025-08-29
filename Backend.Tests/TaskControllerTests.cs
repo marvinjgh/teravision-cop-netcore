@@ -443,34 +443,216 @@ public class TaskControllerTests
         mockRepository.Verify(r => r.Save(), Times.Once);
     }
 
-    // [Fact]
-    // public async Task DeleteProject_ReturnsOk()
-    // {
-    //     //Arrange
-    //     long testId = 1;
-    //     Project testProject = new() { Id = testId };
+    [Fact]
+    public async Task DeleteTask_ReturnsNotFound()
+    {
+        // Arrange
+        long testId = 1;
 
-    //     var mockRepo = new Mock<IRepositoryWrapper>();
-    //     mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId))
-    //         .ReturnsAsync(testProject);
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        mockRepo.Setup(repo => repo.TaskRepository.GetTaskById(testId, false))
+            .ReturnsAsync((TaskEntity?)null);
 
-    //     var controller = new ProjectController(mockRepo.Object);
+        var controller = new TaskController(mockRepo.Object);
 
-    //     //Act
-    //     var result = await controller.DeleteProject(testId);
+        //Act
+        var result = await controller.DeleteTask(testId);
 
-    //     //Assert
-    //     var okObjectResult = Assert.IsType<NoContentResult>(result);
-    //     Assert.NotNull(okObjectResult);
-    //     mockRepo.Verify(
-    //         repo => repo.ProjectRepository.DeleteProject(testProject),
-    //         Times.Once
-    //     );
-    //     mockRepo.Verify(
-    //         repo => repo.Save(),
-    //         Times.Once
-    //     );
-    // }
+        //Assert
+        var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(result);
+        ErrorDTO error = (ErrorDTO)notFoundObjectResult.Value;
+        Assert.Equal("Task not found", error.Message);
+
+        mockRepo.Verify(
+            repo => repo.TaskRepository.GetTaskById(testId, false),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task DeleteProject_ReturnsOk()
+    {
+        // Arrange
+        long testId = 1;
+        var now = DateTimeOffset.UtcNow;
+        var taskEntity = new TaskEntity
+        {
+            Id = 1,
+            Name = "Task 1",
+            Description = "Description of Task 1",
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        var mockRepo = new Mock<IRepositoryWrapper>();
+        mockRepo.Setup(repo => repo.TaskRepository.GetTaskById(testId, false))
+            .ReturnsAsync(taskEntity);
+        mockRepo.Setup(repo => repo.TaskRepository.DeleteTask(taskEntity));
+        mockRepo.Setup(repo => repo.Save()).Returns(Task.CompletedTask);
+
+        var controller = new TaskController(mockRepo.Object);
+
+        //Act
+        var result = await controller.DeleteTask(testId);
+
+        //Assert
+        Assert.IsType<NoContentResult>(result);
+
+        mockRepo.Verify(
+            repo => repo.TaskRepository.GetTaskById(testId, false),
+            Times.Once
+        );
+        mockRepo.Verify(
+            repo => repo.TaskRepository.DeleteTask(taskEntity),
+            Times.Once
+        );
+        mockRepo.Verify(
+            repo => repo.Save(),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task AssignTaskToProject_ReturnsNotFound_WhenTaskDoesNotExist()
+    {
+        // Arrange
+        long taskId = 1, projectId = 2;
+        var mockRepository = new Mock<IRepositoryWrapper>();
+        var mockTaskRepo = new Mock<ITaskRepository>();
+        var mockProjectRepo = new Mock<IProjectRepository>();
+
+        mockTaskRepo.Setup(r => r.GetTaskById(taskId, false)).ReturnsAsync((TaskEntity?)null);
+        mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
+        mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
+
+        var controller = new TaskController(mockRepository.Object);
+
+        // Act
+        var result = await controller.AssignTaskToProject(taskId, projectId);
+
+        // Assert
+        var notFound = Assert.IsType<NotFoundObjectResult>(result);
+        var error = Assert.IsType<ErrorDTO>(notFound.Value);
+        Assert.Equal("Task not found", error.Message);
+
+        mockTaskRepo.Verify(r => r.GetTaskById(taskId, false), Times.Once);
+        mockProjectRepo.Verify(r => r.GetProjectById(It.IsAny<long>(), false), Times.Never);
+    }
+
+    [Fact]
+    public async Task AssignTaskToProject_ReturnsNotFound_WhenProjectDoesNotExist()
+    {
+        // Arrange
+        long taskId = 1, projectId = 2;
+        var task = new TaskEntity { Id = taskId, Name = "Task", ProjectId = 0 };
+        var mockRepository = new Mock<IRepositoryWrapper>();
+        var mockTaskRepo = new Mock<ITaskRepository>();
+        var mockProjectRepo = new Mock<IProjectRepository>();
+
+        mockTaskRepo.Setup(r => r.GetTaskById(taskId, false)).ReturnsAsync(task);
+        mockProjectRepo.Setup(r => r.GetProjectById(projectId, false)).ReturnsAsync((Project?)null);
+        mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
+        mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
+
+        var controller = new TaskController(mockRepository.Object);
+
+        // Act
+        var result = await controller.AssignTaskToProject(taskId, projectId);
+
+        // Assert
+        var notFound = Assert.IsType<NotFoundObjectResult>(result);
+        var error = Assert.IsType<ErrorDTO>(notFound.Value);
+        Assert.Equal("Project not found", error.Message);
+
+        mockTaskRepo.Verify(r => r.GetTaskById(taskId, false), Times.Once);
+        mockProjectRepo.Verify(r => r.GetProjectById(projectId, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task AssignTaskToProject_ReturnsNoContent_WhenSuccess()
+    {
+        // Arrange
+        long taskId = 1, projectId = 2;
+        var task = new TaskEntity { Id = taskId, Name = "Task", ProjectId = 0 };
+        var project = new Project { Id = projectId, Name = "Project" };
+        var mockRepository = new Mock<IRepositoryWrapper>();
+        var mockTaskRepo = new Mock<ITaskRepository>();
+        var mockProjectRepo = new Mock<IProjectRepository>();
+
+        mockTaskRepo.Setup(r => r.GetTaskById(taskId, false)).ReturnsAsync(task);
+        mockProjectRepo.Setup(r => r.GetProjectById(projectId, false)).ReturnsAsync(project);
+        mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
+        mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
+        mockTaskRepo.Setup(r => r.UpdateTask(task));
+        mockRepository.Setup(r => r.Save()).Returns(Task.CompletedTask);
+
+        var controller = new TaskController(mockRepository.Object);
+
+        // Act
+        var result = await controller.AssignTaskToProject(taskId, projectId);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+        Assert.Equal(projectId, task.ProjectId);
+
+        mockTaskRepo.Verify(r => r.GetTaskById(taskId, false), Times.Once);
+        mockProjectRepo.Verify(r => r.GetProjectById(projectId, false), Times.Once);
+        mockTaskRepo.Verify(r => r.UpdateTask(task), Times.Once);
+        mockRepository.Verify(r => r.Save(), Times.Once);
+    }
+
+    [Fact]
+    public async Task UnassignTaskFromProject_ReturnsNotFound_WhenTaskDoesNotExist()
+    {
+        // Arrange
+        long taskId = 1;
+        var mockRepository = new Mock<IRepositoryWrapper>();
+        var mockTaskRepo = new Mock<ITaskRepository>();
+
+        mockTaskRepo.Setup(r => r.GetTaskById(taskId, false)).ReturnsAsync((TaskEntity?)null);
+        mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
+
+        var controller = new TaskController(mockRepository.Object);
+
+        // Act
+        var result = await controller.UnassignTaskFromProject(taskId);
+
+        // Assert
+        var notFound = Assert.IsType<NotFoundObjectResult>(result);
+        var error = Assert.IsType<ErrorDTO>(notFound.Value);
+        Assert.Equal("Task not found", error.Message);
+
+        mockTaskRepo.Verify(r => r.GetTaskById(taskId, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task UnassignTaskFromProject_ReturnsNoContent_WhenSuccess()
+    {
+        // Arrange
+        long taskId = 1;
+        var task = new TaskEntity { Id = taskId, Name = "Task", ProjectId = 2 };
+        var mockRepository = new Mock<IRepositoryWrapper>();
+        var mockTaskRepo = new Mock<ITaskRepository>();
+
+        mockTaskRepo.Setup(r => r.GetTaskById(taskId, false)).ReturnsAsync(task);
+        mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
+        mockTaskRepo.Setup(r => r.UpdateTask(task));
+        mockRepository.Setup(r => r.Save()).Returns(Task.CompletedTask);
+
+        var controller = new TaskController(mockRepository.Object);
+
+        // Act
+        var result = await controller.UnassignTaskFromProject(taskId);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+        Assert.Null(task.ProjectId);
+
+        mockTaskRepo.Verify(r => r.GetTaskById(taskId, false), Times.Once);
+        mockTaskRepo.Verify(r => r.UpdateTask(task), Times.Once);
+        mockRepository.Verify(r => r.Save(), Times.Once);
+    }
+
 
     // [Fact]
     // public async Task DeleteProject_ReturnsNotFound()

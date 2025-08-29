@@ -133,6 +133,65 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         return Ok(task.ToTaskDto());
     }
 
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<IActionResult> DeleteTask(long id)
+    {
+        var task = await repository.TaskRepository.GetTaskById(id);
+
+        if (task == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Task not found" });
+        }
+
+        task.ProjectId = null;
+        repository.TaskRepository.UpdateTask(task);
+
+        repository.TaskRepository.DeleteTask(task);
+        await repository.Save();
+
+        return NoContent();
+    }
+
+    [HttpPost("{taskId}/assign/{projectId}")]
+    public async Task<IActionResult> AssignTaskToProject(long taskId, long projectId)
+    {
+        var task = await repository.TaskRepository.GetTaskById(taskId);
+        if (task == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Task not found" });
+        }
+
+        var project = await repository.ProjectRepository.GetProjectById(projectId);
+        if (project == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Project not found" });
+        }
+
+        task.ProjectId = projectId;
+        repository.TaskRepository.UpdateTask(task);
+        await repository.Save();
+
+        return NoContent();
+    }
+
+    [HttpPost("{taskId}/unassign")]
+    public async Task<IActionResult> UnassignTaskFromProject(long taskId)
+    {
+        var task = await repository.TaskRepository.GetTaskById(taskId);
+        if (task == null)
+        {
+            return NotFound(new ErrorDTO { Message = "Task not found" });
+        }
+
+        task.ProjectId = null;
+        repository.TaskRepository.UpdateTask(task);
+        await repository.Save();
+
+        return NoContent();
+    }
 
     // [HttpDelete("{id}")]
     // [ProducesResponseType(StatusCodes.Status204NoContent)]
