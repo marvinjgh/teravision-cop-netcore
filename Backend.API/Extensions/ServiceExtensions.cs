@@ -6,8 +6,16 @@ using Microsoft.OpenApi.Models;
 
 namespace Backend.API.Extensions;
 
+/// <summary>
+/// Provides extension methods for service configuration.
+/// </summary>
 public static class ServiceExtensions
 {
+    /// <summary>
+    /// Configures the database context for the application.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    /// <param name="config">The <see cref="IConfiguration"/> for the application.</param>
     public static void ConfigureDBContext(this IServiceCollection services, IConfiguration config)
     {
         services.AddDbContext<RepositoryContext>(
@@ -18,10 +26,20 @@ public static class ServiceExtensions
                     )
             );
     }
+
+    /// <summary>
+    /// Configures the repository wrapper for dependency injection.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
     public static void ConfigureRepositoryWrapper(this IServiceCollection services)
     {
         services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
     }
+
+    /// <summary>
+    /// Configures OpenAPI for the application.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
     public static void ConfigureOpenApi(this IServiceCollection services)
     {
         services.AddOpenApi("copapi", options =>
@@ -56,6 +74,10 @@ public static class ServiceExtensions
         });
     }
 
+    /// <summary>
+    /// Applies any pending database migrations.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceProvider"/> to get services from.</param>
     public static void ApplyMigrations(this IServiceProvider services)
     {
         var scope = services.CreateScope();

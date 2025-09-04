@@ -171,7 +171,7 @@ public class ProjectControllerTests
         var mockRepository = new Mock<IRepositoryWrapper>();
 
         var controller = new ProjectController(mockRepository.Object);
-        var projectCreateDTO = new ProjectCreateDTO();
+        var projectCreateDTO = new ProjectRequestDTO();
 
         controller.ModelState.AddModelError("Name", "The Name field is required.");
 
@@ -199,7 +199,7 @@ public class ProjectControllerTests
         // Arrange: create mocks and simulate new project Id assignment
         long testId = 1;
         var now = DateTimeOffset.UtcNow;
-        var projectCreateDTO = new ProjectCreateDTO
+        var projectCreateDTO = new ProjectRequestDTO
         {
             Name = "Test Project",
             Description = "Test Description"
@@ -364,7 +364,7 @@ public class ProjectControllerTests
         ErrorDTO error = null;
         Mock<IRepositoryWrapper> mockRepository = null;
         ProjectController controller = null;
-        var projectUpdateDTO = new ProjectUpdateDTO
+        var projectUpdateDTO = new ProjectRequestDTO
         {
             Name = "Test Project2",
             Description = "Test Description2"
@@ -403,7 +403,7 @@ public class ProjectControllerTests
     {
         // Arrage
         long testId = 1;
-        var projectDTO = new ProjectUpdateDTO
+        var projectDTO = new ProjectRequestDTO
         {
             Name = "Test Project",
             Description = "Test Description"

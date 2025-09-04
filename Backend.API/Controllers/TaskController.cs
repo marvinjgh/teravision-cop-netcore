@@ -11,12 +11,16 @@ namespace Backend.API.Controllers;
 [ApiController]
 public class TaskController(IRepositoryWrapper repository) : ControllerBase
 {
-
+    /// <summary>
+    /// Get a task by its id
+    /// </summary>
+    /// <param name="id">The id of the task</param>
+    /// <returns>The task if found</returns>
     [HttpGet("{id}")]
     [ProducesResponseType<TaskDTO>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public async Task<IActionResult> GetTask(long id)
+    public async Task<IActionResult> GetTask([Description("The id of the task")] long id)
     {
         var task = await repository.TaskRepository.GetTaskById(id);
 
@@ -59,11 +63,16 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         return Ok(paginatedResult);
     }
 
+    /// <summary>
+    /// Create a new task
+    /// </summary>
+    /// <param name="task">The task to create</param>
+    /// <returns>The created task</returns>
     [HttpPost]
-    [ProducesResponseType<TaskEntity>(StatusCodes.Status201Created)]
+    [ProducesResponseType<TaskDTO>(StatusCodes.Status201Created)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]
     [Produces("application/json")]
-    public async Task<IActionResult> PostTask([FromBody] TaskCreateDTO task)
+    public async Task<IActionResult> PostTask([FromBody] TaskRequestDTO task)
     {
         if (task is null)
         {
@@ -94,12 +103,18 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         return CreatedAtAction(nameof(GetTask), new { id = newTask.Id }, newTask.ToTaskDto());
     }
 
+    /// <summary>
+    /// Update an existing task
+    /// </summary>
+    /// <param name="id">The id of the task to update</param>
+    /// <param name="updateTask">The task data to update</param>
+    /// <returns>The updated task</returns>
     [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<TaskDTO>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public async Task<IActionResult> PutTask(long id, [FromBody] TaskUpdateDTO updateTask)
+    public async Task<IActionResult> PutTask([Description("The id of the task to update")] long id, [FromBody] TaskRequestDTO updateTask)
     {
         if (updateTask is null)
         {
@@ -133,11 +148,16 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         return Ok(task.ToTaskDto());
     }
 
+    /// <summary>
+    /// Delete a task by its id
+    /// </summary>
+    /// <param name="id">The id of the task to delete</param>
+    /// <returns>No content</returns>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
     [Produces("application/json")]
-    public async Task<IActionResult> DeleteTask(long id)
+    public async Task<IActionResult> DeleteTask([Description("The id of the task to delete")] long id)
     {
         var task = await repository.TaskRepository.GetTaskById(id);
 
@@ -155,8 +175,17 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Assign a task to a project
+    /// </summary>
+    /// <param name="taskId">The id of the task</param>
+    /// <param name="projectId">The id of the project</param>
+    /// <returns>No content</returns>
     [HttpPost("{taskId}/assign/{projectId}")]
-    public async Task<IActionResult> AssignTaskToProject(long taskId, long projectId)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<IActionResult> AssignTaskToProject([Description("The id of the task")] long taskId, [Description("The id of the project")] long projectId)
     {
         var task = await repository.TaskRepository.GetTaskById(taskId);
         if (task == null)
@@ -177,8 +206,16 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Unassign a task from its project
+    /// </summary>
+    /// <param name="taskId">The id of the task</param>
+    /// <returns>No content</returns>
     [HttpPost("{taskId}/unassign")]
-    public async Task<IActionResult> UnassignTaskFromProject(long taskId)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
+    [Produces("application/json")]
+    public async Task<IActionResult> UnassignTaskFromProject([Description("The id of the task")] long taskId)
     {
         var task = await repository.TaskRepository.GetTaskById(taskId);
         if (task == null)
@@ -192,23 +229,4 @@ public class TaskController(IRepositoryWrapper repository) : ControllerBase
 
         return NoContent();
     }
-
-    // [HttpDelete("{id}")]
-    // [ProducesResponseType(StatusCodes.Status204NoContent)]
-    // [ProducesResponseType<ErrorDTO>(StatusCodes.Status404NotFound)]
-    // [Produces("application/json")]
-    // public async Task<IActionResult> DeleteProject(long id)
-    // {
-    //     var project = await repository.ProjectRepository.GetProjectById(id);
-
-    //     if (project == null)
-    //     {
-    //         return NotFound(new ErrorDTO { Message = "Project not found" });
-    //     }
-
-    //     repository.ProjectRepository.DeleteProject(project);
-    //     await repository.Save();
-
-    //     return NoContent();
-    // }
 }
