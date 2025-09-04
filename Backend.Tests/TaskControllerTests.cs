@@ -174,7 +174,7 @@ public class TaskControllerTests
         var mockRepository = new Mock<IRepositoryWrapper>();
 
         var controller = new TaskController(mockRepository.Object);
-        var taskCreateDTO = new TaskCreateDTO();
+        var taskCreateDTO = new TaskRequestDTO();
 
         controller.ModelState.AddModelError("Name", "The Name field is required.");
 
@@ -193,7 +193,7 @@ public class TaskControllerTests
         // Arrange: create mocks and simulate new project Id assignment
         long testId = 1;
         var now = DateTimeOffset.UtcNow;
-        var taskCreateDTO = new TaskCreateDTO
+        var taskCreateDTO = new TaskRequestDTO
         {
             Name = "Test Task",
             Description = "Test Description",
@@ -260,7 +260,7 @@ public class TaskControllerTests
     {
         // Arrange
         long invalidProjectId = 0;
-        var taskCreateDTO = new TaskCreateDTO
+        var taskCreateDTO = new TaskRequestDTO
         {
             Name = "Test Task",
             Description = "Test Description",
@@ -308,7 +308,7 @@ public class TaskControllerTests
         ErrorDTO error;
         Mock<IRepositoryWrapper> mockRepository;
         TaskController controller;
-        var taskUpdateDTO = new TaskUpdateDTO();
+        var taskUpdateDTO = new TaskRequestDTO();
 
         // Arrage 1
         mockRepository = new Mock<IRepositoryWrapper>();
@@ -344,7 +344,7 @@ public class TaskControllerTests
         ErrorDTO error;
         Mock<IRepositoryWrapper> mockRepository;
         TaskController controller;
-        var taskUpdateDTO = new TaskUpdateDTO
+        var taskUpdateDTO = new TaskRequestDTO
         {
             Name = "T1",
             Description = "",
@@ -388,7 +388,7 @@ public class TaskControllerTests
     {
         // Arrage
         long testId = 1;
-        var taskUpdateDTO = new TaskUpdateDTO
+        var taskUpdateDTO = new TaskRequestDTO
         {
             Name = "Test task",
             Description = "Test Description",
@@ -550,7 +550,7 @@ public class TaskControllerTests
         var mockProjectRepo = new Mock<IProjectRepository>();
 
         mockTaskRepo.Setup(r => r.GetTaskById(taskId, false)).ReturnsAsync(task);
-        mockProjectRepo.Setup(r => r.GetProjectById(projectId, false)).ReturnsAsync((Project?)null);
+        mockProjectRepo.Setup(r => r.GetProjectById(projectId, false)).ReturnsAsync((ProjectEntity?)null);
         mockRepository.Setup(r => r.TaskRepository).Returns(mockTaskRepo.Object);
         mockRepository.Setup(r => r.ProjectRepository).Returns(mockProjectRepo.Object);
 
@@ -574,7 +574,7 @@ public class TaskControllerTests
         // Arrange
         long taskId = 1, projectId = 2;
         var task = new TaskEntity { Id = taskId, Name = "Task", ProjectId = 0 };
-        var project = new Project { Id = projectId, Name = "Project" };
+        var project = new ProjectEntity { Id = projectId, Name = "Project" };
         var mockRepository = new Mock<IRepositoryWrapper>();
         var mockTaskRepo = new Mock<ITaskRepository>();
         var mockProjectRepo = new Mock<IProjectRepository>();
@@ -652,35 +652,5 @@ public class TaskControllerTests
         mockTaskRepo.Verify(r => r.UpdateTask(task), Times.Once);
         mockRepository.Verify(r => r.Save(), Times.Once);
     }
-
-
-    // [Fact]
-    // public async Task DeleteProject_ReturnsNotFound()
-    // {
-    //     // Arrange
-    //     long testId = 1;
-    //     Project testProject = new() { Id = testId };
-
-    //     var mockRepo = new Mock<IRepositoryWrapper>();
-    //     mockRepo.Setup(repo => repo.ProjectRepository.GetProjectById(testId))
-    //         .ReturnsAsync((Project?)null);
-
-    //     var controller = new ProjectController(mockRepo.Object);
-
-    //     //Act
-    //     var result = await controller.DeleteProject(testId);
-
-    //     //Assert
-    //     var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(result);
-    //     ErrorDTO error = (ErrorDTO)notFoundObjectResult.Value;
-    //     Assert.Equal("Project not found", error.Message);
-
-    //     mockRepo.Verify(
-    //         repo => repo.ProjectRepository.DeleteProject(testProject),
-    //         Times.Never
-    //     );
-    // }
-
-
 }
 #pragma warning restore CS8600, CS8602, CS8625
