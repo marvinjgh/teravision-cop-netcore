@@ -24,6 +24,10 @@ namespace Backend.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Register(UserDTO request)
         {
+            if (request == null)
+            {
+                return BadRequest(new ErrorDTO { Message = "Empty request" });
+            }
 
             var users = await repository.UserRepository.GetAllUsers(u => u.Username == request.Username);
 
@@ -91,7 +95,10 @@ namespace Backend.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> RefreshToken(RefreshTokenDTO request)
         {
-
+            if (request is null)
+            {
+                return BadRequest(new ErrorDTO { Message = "Empty request." });
+            }
             var user = await repository.UserRepository.GetUserById(request.UserId);
             if (user is null || user.RefreshToken != request.RefreshToken || user.ResfreshTokenExpiryTime <= DateTime.UtcNow)
             {
@@ -112,46 +119,48 @@ namespace Backend.API.Controllers
             return Ok(token);
         }
 
-        [Authorize]
-        [HttpGet("auth")]
-        public IActionResult AuthenticatedOnlyEndpoint()
-        {
-            // You can access the user's claims via the User property (ClaimsPrincipal)
-            var username = User.FindFirstValue(ClaimTypes.Name);
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
+        // Note: this code is an example of how to get the user data in the JWS
+        // [Authorize]
+        // [HttpGet("auth")]
+        // public IActionResult AuthenticatedOnlyEndpoint()
+        // {
+        //     // You can access the user's claims via the User property (ClaimsPrincipal)
+        //     var username = User.FindFirstValue(ClaimTypes.Name);
+        //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //     var userRole = User.FindFirstValue(ClaimTypes.Role);
+        //
+        //     return Ok(new
+        //     {
+        //         Message = "You are authenticated. User info from the JWT is available in the `User` property of the controller.",
+        //         UserInfo = new
+        //         {
+        //             Id = userId,
+        //             Username = username,
+        //             Role = userRole
+        //         }
+        //     });
+        // }
 
-            return Ok(new
-            {
-                Message = "You are authenticated. User info from the JWT is available in the `User` property of the controller.",
-                UserInfo = new
-                {
-                    Id = userId,
-                    Username = username,
-                    Role = userRole
-                }
-            });
-        }
+        // Note: this code is an example of how to get the user data in the JWS
+        // [Authorize(Roles = "Admin")]
+        // [HttpGet("admin-only")]
+        // public IActionResult AdminOnlyEndpoint()
+        // {
+        //     var username = User.FindFirstValue(ClaimTypes.Name);
+        //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //     var userRole = User.FindFirstValue(ClaimTypes.Role);
 
-        [Authorize(Roles = "Admin")]
-        [HttpGet("admin-only")]
-        public IActionResult AdminOnlyEndpoint()
-        {
-            var username = User.FindFirstValue(ClaimTypes.Name);
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
-
-            return Ok(new
-            {
-                Message = "You are an Admin.",
-                UserInfo = new
-                {
-                    Id = userId,
-                    Username = username,
-                    Role = userRole
-                }
-            });
-        }
+        //     return Ok(new
+        //     {
+        //         Message = "You are an Admin.",
+        //         UserInfo = new
+        //         {
+        //             Id = userId,
+        //             Username = username,
+        //             Role = userRole
+        //         }
+        //     });
+        // }
 
         private string CreateToken(UserEntity user)
         {
@@ -162,13 +171,13 @@ namespace Backend.API.Controllers
                 new(ClaimTypes.Role, user.Role)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["AppSettings:Token"]!));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
             var tokenDesc = new JwtSecurityToken(
-                    issuer: configuration.GetValue<string>("AppSettings:Issuer"),
-                    audience: configuration.GetValue<string>("AppSettings:Audience"),
+                    issuer: configuration["AppSettings:Issuer"],
+                    audience: configuration["AppSettings:Audience"],
                     claims: claims,
                     expires: DateTime.UtcNow.AddMinutes(5),
                     signingCredentials: creds
