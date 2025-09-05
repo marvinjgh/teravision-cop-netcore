@@ -12,6 +12,7 @@ public class RepositoryWrapper(RepositoryContext repositoryContext) : IRepositor
 #pragma warning disable CS8618
     private IProjectRepository _project;
     private ITaskRepository _task;
+    private IUserRepository _user;
 #pragma warning restore CS8618
     /// <summary>
     /// Gets the project repository.
@@ -33,6 +34,17 @@ public class RepositoryWrapper(RepositoryContext repositoryContext) : IRepositor
         {
             _task ??= new TaskRepository(repositoryContext);
             return _task;
+        }
+    }
+    /// <summary>
+    /// Gets the user repository.
+    /// </summary>
+    public IUserRepository UserRepository
+    {
+        get
+        {
+            _user ??= new UserRepository(repositoryContext);
+            return _user;
         }
     }
     /// <summary>

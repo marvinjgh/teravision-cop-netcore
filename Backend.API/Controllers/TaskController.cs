@@ -3,12 +3,14 @@ using Backend.Service.Contracts;
 using Backend.Service.DataTransferObjects;
 using Backend.Service.Extensions;
 using Backend.Service.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.API.Controllers;
 
 [Route("api/task")]
 [ApiController]
+[Authorize]
 public class TaskController(IRepositoryWrapper repository) : ControllerBase
 {
     /// <summary>

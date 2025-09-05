@@ -16,6 +16,11 @@ public interface IRepositoryWrapper
     ITaskRepository TaskRepository { get; }
 
     /// <summary>
+    /// Gets the user repository.
+    /// </summary>
+    IUserRepository UserRepository { get; }
+
+    /// <summary>
     /// Saves all changes made in this context to the database.
     /// </summary>
     /// <returns>A task that represents the asynchronous save operation.</returns>
