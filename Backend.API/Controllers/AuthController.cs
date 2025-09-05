@@ -116,14 +116,41 @@ namespace Backend.API.Controllers
         [HttpGet("auth")]
         public IActionResult AuthenticatedOnlyEndpoint()
         {
-            return Ok("You are authenticated");
+            // You can access the user's claims via the User property (ClaimsPrincipal)
+            var username = User.FindFirstValue(ClaimTypes.Name);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            return Ok(new
+            {
+                Message = "You are authenticated. User info from the JWT is available in the `User` property of the controller.",
+                UserInfo = new
+                {
+                    Id = userId,
+                    Username = username,
+                    Role = userRole
+                }
+            });
         }
 
         [Authorize(Roles = "Admin")]
         [HttpGet("admin-only")]
         public IActionResult AdminOnlyEndpoint()
         {
-            return Ok("You are an admin");
+            var username = User.FindFirstValue(ClaimTypes.Name);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            return Ok(new
+            {
+                Message = "You are an Admin.",
+                UserInfo = new
+                {
+                    Id = userId,
+                    Username = username,
+                    Role = userRole
+                }
+            });
         }
 
         private string CreateToken(UserEntity user)
