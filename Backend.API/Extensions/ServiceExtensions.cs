@@ -3,6 +3,10 @@ using Backend.Service;
 using Backend.Service.Contracts;
 using Backend.Service.Repository;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend.API.Extensions;
 
@@ -53,9 +57,29 @@ public static class ServiceExtensions
                     Description = "An API for CoP."
                 };
                 document.Servers = [
-                    new OpenApiServer{ Url= "http://localhost:8080/"},
                     new OpenApiServer{ Url= "https://localhost:8081/"},
+                    new OpenApiServer{ Url= "http://localhost:8080/"},
                 ];
+                var securityScheme = new OpenApiSecurityScheme
+                {
+                    Name = "JWT Authentication",
+                    Description = "Enter JWT Bearer token **_only_**",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer", // must be lower case
+                    BearerFormat = "JWT",
+                    Reference = new OpenApiReference
+                    {
+                        Id = JwtBearerDefaults.AuthenticationScheme,
+                        Type = ReferenceType.SecurityScheme
+                    }
+                };
+                document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes.Add(JwtBearerDefaults.AuthenticationScheme, securityScheme);
+                document.SecurityRequirements.Add(new OpenApiSecurityRequirement
+                {
+                    { securityScheme, [] }
+                });
                 return Task.CompletedTask;
             });
             options.AddSchemaTransformer((schema, context, cancellationToken) =>
@@ -69,6 +93,19 @@ public static class ServiceExtensions
                     schema.Format = "long";
                 }
 
+                return Task.CompletedTask;
+            });
+            options.AddOperationTransformer((operation, context, asdf) =>
+            {
+                if (context.Description.ActionDescriptor.EndpointMetadata.Any(m => m is AllowAnonymousAttribute))
+                {
+                    operation.Security = [
+                        new OpenApiSecurityRequirement
+                        {
+                            { new OpenApiSecurityScheme(), new List<string>() }
+                        }
+                    ];
+                }
                 return Task.CompletedTask;
             });
         });
@@ -95,5 +132,23 @@ public static class ServiceExtensions
                 Console.WriteLine(exception.Message);
             }
         }
+    }
+
+    public static void ConfigureAuth(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(opt =>
+        {
+            opt.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = configuration["AppSettings:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = configuration["AppSettings:Audience"],
+                ValidateLifetime = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["AppSettings:Token"]!)),
+                ValidateIssuerSigningKey = true,
+            };
+        });
     }
 }

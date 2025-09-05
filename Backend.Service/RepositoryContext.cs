@@ -44,7 +44,7 @@ public class RepositoryContext(DbContextOptions options) : DbContext(options)
             {
                 entry.Property("CreatedAt").CurrentValue = now;
             }
-            if (entry.State == EntityState.Deleted && entry.Metadata.FindProperty("IsDeleted") != null && (entry.Property("IsDeleted").CurrentValue is bool isDeleted && isDeleted == false))
+            if (entry.State == EntityState.Deleted && entry.Metadata.FindProperty("IsDeleted") != null && entry.Property("IsDeleted").CurrentValue is bool isDeleted && isDeleted == false)
             {
                 entry.Property("IsDeleted").CurrentValue = true;
                 entry.State = EntityState.Modified;
@@ -64,5 +64,9 @@ public class RepositoryContext(DbContextOptions options) : DbContext(options)
     /// Gets or sets the <see cref="DbSet{TEntity}"/> of tasks.
     /// </summary>
     public DbSet<TaskEntity> Tasks { get; set; }
+    /// <summary>
+    /// Gets or sets the <see cref="DbSet{TEntity}"/> of users.
+    /// </summary>
+    public DbSet<UserEntity> Users { get; set; }
 }
 

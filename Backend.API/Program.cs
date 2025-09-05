@@ -17,6 +17,10 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull; // Optional
     options.JsonSerializerOptions.WriteIndented = false; // For formatting
 });
+
+// AUTH config
+builder.Services.ConfigureAuth(builder.Configuration);
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.ConfigureOpenApi();
