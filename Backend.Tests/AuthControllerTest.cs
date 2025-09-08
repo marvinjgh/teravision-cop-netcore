@@ -243,7 +243,7 @@ public class AuthControllerTests
             Username = "test",
             Role = "User",
             RefreshToken = "oldtoken",
-            ResfreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1)
+            RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1)
         };
 
         var request = new RefreshTokenDTO { UserId = user.Id, RefreshToken = "oldtoken" };
@@ -273,7 +273,7 @@ public class AuthControllerTests
             Username = "test",
             Role = "User",
             RefreshToken = "validtoken",
-            ResfreshTokenExpiryTime = DateTime.UtcNow.AddDays(1)
+            RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(1)
         };
         var request = new RefreshTokenDTO { UserId = user.Id, RefreshToken = "validtoken" };
 
