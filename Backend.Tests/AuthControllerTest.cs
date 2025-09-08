@@ -1,10 +1,8 @@
 using System.Linq.Expressions;
-using System.Security.Claims;
 using Backend.API.Controllers;
 using Backend.Service.Contracts;
 using Backend.Service.DataTransferObjects;
 using Backend.Service.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -55,7 +53,7 @@ public class AuthControllerTests
     public async Task Register_ReturnsBadRequest_WhenUsernameExists()
     {
         // Arrage
-        var request = new UserDTO { Username = "test", Password = "password" };
+        var request = new UserDTO { Username = "test", Password = "password", Name = "name", Email = "email@host.com" };
         var existingUser = new UserEntity { Username = "test" };
 
         _mockUserRepo.Setup(r => r.GetAllUsers(It.IsAny<Expression<Func<UserEntity, bool>>>()))
@@ -75,7 +73,7 @@ public class AuthControllerTests
     public async Task Register_ReturnsOk_WhenUserCreated()
     {
         // Arrange
-        var request = new UserDTO { Username = "newuser", Password = "password" };
+        var request = new UserDTO { Username = "newuser", Password = "password", Name = "name", Email = "email@host.com" };
 
         _mockUserRepo.Setup(r => r.GetAllUsers(It.IsAny<Expression<Func<UserEntity, bool>>>()))
                      .ReturnsAsync([]);
@@ -117,7 +115,7 @@ public class AuthControllerTests
     public async Task Login_ReturnsBadRequest_WhenUserNotFound()
     {
         // Arrage
-        var request = new UserDTO { Username = "nouser", Password = "pw" };
+        var request = new LoginDTO { Username = "nouser", Password = "pw" };
         _mockUserRepo.Setup(r => r.GetAllUsers(It.IsAny<Expression<Func<UserEntity, bool>>>()))
                      .ReturnsAsync([]);
 
@@ -138,7 +136,7 @@ public class AuthControllerTests
     public async Task Login_ReturnsBadRequest_WhenPasswordIsInvalid()
     {
         // Arrage
-        var request = new UserDTO { Username = "test", Password = "wrongpw" };
+        var request = new LoginDTO { Username = "test", Password = "wrongpw" };
         var user = new UserEntity
         {
             Id = 1,
@@ -167,7 +165,7 @@ public class AuthControllerTests
     public async Task Login_ReturnsOk_WhenCredentialsAreValid()
     {
         // Arrage
-        var request = new UserDTO { Username = "valid", Password = "password123" };
+        var request = new LoginDTO { Username = "valid", Password = "password123" };
         var user = new UserEntity
         {
             Id = 1,

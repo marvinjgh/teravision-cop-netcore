@@ -54,7 +54,7 @@ namespace Backend.API.Controllers
         [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
         [Produces("application/json")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login(UserDTO request)
+        public async Task<IActionResult> Login(LoginDTO request)
         {
             if (request == null)
             {
