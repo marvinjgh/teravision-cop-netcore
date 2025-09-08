@@ -100,7 +100,7 @@ namespace Backend.API.Controllers
                 return BadRequest(new ErrorDTO { Message = "Empty request." });
             }
             var user = await repository.UserRepository.GetUserById(request.UserId);
-            if (user is null || user.RefreshToken != request.RefreshToken || user.ResfreshTokenExpiryTime <= DateTime.UtcNow)
+            if (user is null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
                 return BadRequest(new ErrorDTO { Message = "Invalid data." });
             }
@@ -189,7 +189,7 @@ namespace Backend.API.Controllers
         {
             var resfreshToken = GenerateRefreshToken();
             user.RefreshToken = resfreshToken;
-            user.ResfreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await repository.Save();
             return resfreshToken;
         }

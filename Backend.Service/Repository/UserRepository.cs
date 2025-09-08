@@ -50,4 +50,9 @@ public class UserRepository(RepositoryContext repositoryContext) : RepositoryBas
     /// </summary>
     /// <param name="user">The user to delete.</param>
     public void DeleteUser(UserEntity user) => Delete(user);
+
+    public Task<UserEntity?> FindByUsername(string username)
+    {
+        return FindByCondition(user => user.Username == username).FirstOrDefaultAsync();
+    }
 }
