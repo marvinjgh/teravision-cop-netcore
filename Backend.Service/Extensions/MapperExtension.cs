@@ -39,4 +39,13 @@ public static class MapperExtension
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt
         };
+
+    public static UserDTO ToUserDto(this UserEntity entity) =>
+        new()
+        {
+            Username = entity.Username,
+            Email = entity.Email,
+            Name = entity.Name
+        };    
+
 }

@@ -40,4 +40,6 @@ public interface IUserRepository
     /// </summary>
     /// <param name="user">The user to delete.</param>
     void DeleteUser(UserEntity user);
+
+    Task<UserEntity?> FindByUsername(string username);
 }
